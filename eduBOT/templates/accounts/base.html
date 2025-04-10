@@ -343,7 +343,9 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">eduBOT</a>
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'logo/@eduBOT_logo.png' %}" alt="eduBOT" height="40">
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -483,72 +485,24 @@
         </div>
     </footer>
 
-    <!-- AI Assistant Widget -->
-    <div class="ai-assistant-widget">
-        <div class="ai-assistant-button" id="aiAssistantBtn">
-            <i class="bi bi-robot"></i>
-        </div>
-    </div>
-
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JS -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // AI Assistant Button
-            const aiAssistantBtn = document.getElementById('aiAssistantBtn');
-            if (aiAssistantBtn) {
-                aiAssistantBtn.addEventListener('click', function() {
-                    // Toggle AI assistant modal
-                    const aiModal = new bootstrap.Modal(document.getElementById('aiAssistantModal'));
-                    aiModal.show();
-                });
-            }
-            
             // Initialize any tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
         });
     </script>
     
-    <!-- AI Assistant Modal -->
-    <div class="modal fade" id="aiAssistantModal" tabindex="-1" aria-labelledby="aiAssistantModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0">
-                <div class="modal-header border-0 bg-dark text-white">
-                    <h5 class="modal-title" id="aiAssistantModalLabel">
-                        <i class="bi bi-robot me-2"></i> eduBOT Assistant
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="chat-container mb-3" style="height: 300px; overflow-y: auto;">
-                        <div class="d-flex mb-3">
-                            <div class="avatar-circle me-3" style="width: 40px; height: 40px;">
-                                <i class="bi bi-robot"></i>
-                            </div>
-                            <div class="bg-light p-3 rounded">
-                                <p class="mb-0">Hello! I'm your eduBOT assistant. How can I help you today?</p>
-                            </div>
-                        </div>
-                    </div>
-                    <form id="aiAssistantForm">
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Ask anything..." id="aiAssistantInput">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-send"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <small class="text-muted">Powered by eduBOT AI</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     {% block extra_js %}{% endblock %}
+    
+    <!-- Chatbot Script -->
+    <script>
+        window.chtlConfig = { chatbotId: "6345449717" }
+    </script>
+    <script async data-id="6345449717" id="chatling-embed-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
 </body>
 </html> 

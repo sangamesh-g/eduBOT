@@ -480,6 +480,27 @@ def placement_test_result(request, attempt_id):
     return render(request, 'courses/placement_test_result.html', context)
 
 @login_required
+def course_recommendations(request, course_id, attempt_id):
+    """View for showing course recommendations based on placement test results"""
+    course = get_object_or_404(Course, id=course_id)
+    attempt = get_object_or_404(PlacementTestAttempt, id=attempt_id, student=request.user)
+    
+    # Get recommended courses based on the placement test results
+    recommended_courses = Course.objects.filter(
+        category=course.category,
+        level=attempt.recommended_level,
+        is_published=True
+    )
+    
+    context = {
+        'attempt': attempt,
+        'recommended_courses': recommended_courses,
+        'current_course': course
+    }
+    
+    return render(request, 'courses/course_recommendations.html', context)
+
+@login_required
 def upload_placement_test(request):
     """View for uploading placement test via CSV/Excel"""
     if not request.user.is_staff:
@@ -619,8 +640,8 @@ def enroll_course(request, course_id):
         course=course
     )
     
-    messages.success(request, f"Successfully enrolled in {course.title}!")
-    return redirect('course_detail', course_id=course.id)
+    messages.success(request, f"Successfully enrolled in {course.title}! You can now start learning.")
+    return redirect('dashboard')
 
 @login_required
 def course_detail(request, course_id):
@@ -634,21 +655,41 @@ def course_detail(request, course_id):
     # Get placement test requirements
     required_test = None
     latest_attempt = None
+    has_active_test = False
+    has_completed_test = False
+    is_recommended_level = True
+    recommended_level = None
+    test_attempt = None
+    active_test = None
+    
     if not is_enrolled and not is_teacher:
-        required_test = PlacementTest.objects.filter(
+        # Find active placement test for this course category
+        active_test = PlacementTest.objects.filter(
             category=course.category,
             is_active=True
         ).first()
         
-        if required_test:
-            latest_attempt = PlacementTestAttempt.objects.filter(
+        has_active_test = active_test is not None
+        
+        if has_active_test:
+            # Check if user has completed this test
+            test_attempt = PlacementTestAttempt.objects.filter(
                 student=request.user,
-                test=required_test,
+                test=active_test,
                 completed=True
             ).order_by('-end_time').first()
+            
+            has_completed_test = test_attempt is not None
+            
+            # If they completed the test, check if the course level matches their recommended level
+            if has_completed_test:
+                # Get recommended level from the test attempt
+                recommended_level = test_attempt.recommended_level
+                is_recommended_level = recommended_level == course.level.lower()
     
     # Get course progress for enrolled students
     progress = None
+    first_lesson = None
     if is_enrolled:
         enrollment = Enrollment.objects.get(user=request.user, course=course)
         completed_lessons = LessonProgress.objects.filter(
@@ -658,14 +699,24 @@ def course_detail(request, course_id):
         total_lessons = sum(section.lessons.count() for section in course.sections.all())
         if total_lessons > 0:
             progress = (completed_lessons / total_lessons) * 100
+        
+        # Get the first lesson for the continue learning button
+        first_section = course.sections.order_by('order').first()
+        if first_section:
+            first_lesson = first_section.lessons.order_by('order').first()
     
     context = {
         'course': course,
         'is_enrolled': is_enrolled,
         'is_teacher': is_teacher,
         'progress': progress,
-        'required_test': required_test,
-        'latest_attempt': latest_attempt
+        'has_active_test': has_active_test,
+        'has_completed_test': has_completed_test,
+        'is_recommended_level': is_recommended_level,
+        'recommended_level': recommended_level,
+        'test_attempt': test_attempt,
+        'active_test': active_test,
+        'first_lesson': first_lesson
     }
     
     return render(request, 'courses/course_detail.html', context)

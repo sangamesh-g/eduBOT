@@ -125,9 +125,61 @@ class Assessment(models.Model):
 class Conversation(models.Model):
     participants = models.ManyToManyField(User, related_name="conversations")
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Conversation {self.id}"
+    
+    def get_other_participant(self, user):
+        """Get the other participant in a conversation"""
+        return self.participants.exclude(id=user.id).first()
+    
+    def other_user(self, user):
+        """Legacy method for compatibility"""
+        return self.get_other_participant(user)
 
 class Message(models.Model):
-    conversation = models.ForeignKey('Conversation', on_delete=models.CASCADE)
+    MESSAGE_TYPES = (
+        ('text', 'Text'),
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('audio', 'Audio'),
+        ('document', 'Document'),
+    )
+    
+    conversation = models.ForeignKey('Conversation', on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    content = models.TextField(blank=True)
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='text')
+    file = models.FileField(upload_to=get_message_file_path, blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    is_forwarded = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    deleted_by = models.ManyToManyField(User, related_name='deleted_messages', blank=True)
+    
+    def __str__(self):
+        return f"Message {self.id} from {self.sender.username}"
+    
+    def delete_for_user(self, user):
+        """Mark message as deleted for a user"""
+        self.deleted_by.add(user)
+        self.save()
+    
+    def forward(self, to_conversation, user):
+        """Forward this message to another conversation"""
+        forwarded = Message.objects.create(
+            conversation=to_conversation,
+            sender=user,
+            content=self.content,
+            message_type=self.message_type,
+            is_forwarded=True
+        )
+        
+        # If there's a file, copy it
+        if self.file:
+            forwarded.file = self.file
+            forwarded.save()
+            
+        return forwarded
 
 # Create signal handlers to generate user profiles automatically
 @receiver(post_save, sender=User)

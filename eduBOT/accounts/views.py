@@ -5,14 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import transaction
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from django.utils import timezone
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.apps import apps
 import json
 
 from .models import TeacherProfile, StudentProfile, User, Conversation, Message
+from courses.models import PlacementTestAttempt
 from .forms import UserRegisterForm, UserUpdateForm, TeacherProfileUpdateForm, StudentProfileUpdateForm
 from .utils import delete_old_profile_picture
 
@@ -276,57 +277,86 @@ def upload_profile_picture(request):
 
 @login_required
 def courses(request):
-    """View for course catalog"""
+    """View for listing courses"""
     try:
-        # Get all courses first
-        courses = Course.objects.all().select_related('teacher', 'category')
-        
-        # Get filters
         categories = Category.objects.all()
-        selected_category = request.GET.get('category')
-        search_query = request.GET.get('q')
-        level_filter = request.GET.get('level')
-        sort_by = request.GET.get('sort_by', 'newest')
+        level_choices = Course.LEVEL_CHOICES
         
-        # Apply filters only if they are provided
+        # Get search query
+        search_query = request.GET.get('q', '')
+        
+        # Get category filter
+        selected_category = request.GET.get('category', '')
+        
+        # Get level filter
+        level_filter = request.GET.get('level', '')
+        
+        # Get sort by
+        sort_by = request.GET.get('sort_by', '')
+        
+        # Build queryset
+        courses = Course.objects.filter(is_published=True)
+        
+        # Apply search if provided
+        if search_query:
+            courses = courses.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(teacher__username__icontains=search_query)
+            )
+        
+        # Apply category filter if provided
         if selected_category:
             courses = courses.filter(category__slug=selected_category)
         
-        if search_query:
-            courses = courses.filter(title__icontains=search_query)
-        
+        # Apply level filter if provided
         if level_filter:
             courses = courses.filter(level=level_filter)
         
-        # Apply sorting
-        if sort_by == 'rating':
-            courses = courses.annotate(avg_rating=Avg('reviews__rating')).order_by('-avg_rating')
-        else:  # Default: newest
+        # Apply sorting if provided
+        if sort_by == 'price_low':
+            courses = courses.order_by('price')
+        elif sort_by == 'price_high':
+            courses = courses.order_by('-price')
+        else:
+            # Default sort by newest
             courses = courses.order_by('-created_at')
-        
-        # Debug information
-        print(f"Total courses before pagination: {courses.count()}")
-        
+            
+        # Get categories where user has completed placement tests
+        placement_categories = []
+        if request.user.is_authenticated:
+            completed_attempts = PlacementTestAttempt.objects.filter(
+                student=request.user,
+                completed=True
+            )
+            placement_categories = [attempt.test.category for attempt in completed_attempts]
+            
         # Pagination
         paginator = Paginator(courses, 9)  # 9 courses per page
-        page_number = request.GET.get('page', 1)
-        courses = paginator.get_page(page_number)
+        page = request.GET.get('page', 1)
+        
+        try:
+            courses = paginator.page(page)
+        except PageNotAnInteger:
+            courses = paginator.page(1)
+        except EmptyPage:
+            courses = paginator.page(paginator.num_pages)
         
         context = {
             'courses': courses,
+            'total_courses': paginator.count,
             'categories': categories,
-            'selected_category': selected_category,
+            'level_choices': level_choices,
             'search_query': search_query,
+            'selected_category': selected_category,
             'level_filter': level_filter,
             'sort_by': sort_by,
-            'level_choices': Course.LEVEL_CHOICES,
-            'total_courses': courses.paginator.count if hasattr(courses, 'paginator') else len(courses),
+            'placement_categories': placement_categories
         }
-        
+            
         return render(request, 'accounts/courses.html', context)
         
     except Exception as e:
-        messages.error(request, f"Error loading courses: {str(e)}")
         return render(request, 'accounts/courses.html', {'courses': [], 'error': str(e)})
 
 @login_required
@@ -426,10 +456,20 @@ def user_messages(request):
                 deleted_by=request.user
             ).order_by('created_at')
     
+    # Get available users for new conversations (exclude current user and users already in conversations)
+    already_in_conversation = []
+    for conv in conversations:
+        for participant in conv.participants.all():
+            if participant != request.user:
+                already_in_conversation.append(participant.id)
+    
+    available_users = User.objects.exclude(id=request.user.id).exclude(is_superuser=True)
+    
     context = {
         'conversations': conversations,
         'active_conversation': active_conversation,
-        'conversation_messages': conversation_messages
+        'conversation_messages': conversation_messages,
+        'available_users': available_users
     }
     
     return render(request, 'accounts/messages.html', context)
