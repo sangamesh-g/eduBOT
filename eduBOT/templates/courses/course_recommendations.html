@@ -1,0 +1,71 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Course Recommendations{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Course Level Mismatch</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Placement Test Results</h5>
+                        <p>Based on your placement test score of <strong>{{ attempt.score }}</strong>, we recommend courses at the <strong>{{ attempt.recommended_level|title }}</strong> level.</p>
+                        <hr>
+                        <p class="mb-0">The course you selected is at the <strong>{{ current_course.level|title }}</strong> level, which may not be the best fit for your current skill level.</p>
+                    </div>
+
+                    <h5 class="mb-4">Recommended Courses for Your Level</h5>
+                    <div class="row">
+                        {% for course in recommended_courses %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% if course.thumbnail %}
+                                <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ course.title }}</h5>
+                                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-primary">{{ course.level|title }} Level</span>
+                                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-primary btn-sm">View Course</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                No courses are currently available at your recommended level. Please check back later or consider retaking the placement test.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Options:</h5>
+                        <div class="d-flex flex-wrap gap-3">
+                            <a href="{% url 'start_placement_test' attempt.test.id %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Retake Placement Test
+                            </a>
+                            <a href="{% url 'course_detail' current_course.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Selected Course
+                            </a>
+                            <form method="post" action="{% url 'enroll_course' current_course.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="force_enroll" value="true">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Enroll Anyway
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

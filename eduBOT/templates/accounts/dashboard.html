@@ -320,6 +320,25 @@
                     </div>
                 </div>
             {% endif %}
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Placement Tests</h5>
+                            <a href="{% url 'placement_test_list' %}" class="btn btn-light btn-sm">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <p>Take a placement test to determine your skill level and get personalized course recommendations.</p>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'placement_test_list' %}" class="btn btn-primary">
+                                    <i class="bi bi-clipboard-check me-2"></i>Take a Placement Test
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

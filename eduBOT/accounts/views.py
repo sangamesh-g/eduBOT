@@ -331,74 +331,10 @@ def courses(request):
 
 @login_required
 def course_detail(request, course_id):
-    """View for course details"""
-    try:
-        course = get_object_or_404(Course, id=course_id, is_published=True)
-        is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
-        is_teacher = request.user == course.teacher
-        reviews = Review.objects.filter(course=course).select_related('user')
-        
-        # Calculate course stats
-        total_students = course.enrollments.count()
-        average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-        
-        # Check if user has already reviewed this course
-        user_review = None
-        if not is_teacher:
-            user_review = Review.objects.filter(user=request.user, course=course).first()
-        
-        # Prefetch related data to optimize queries
-        course.sections.prefetch_related('lessons')
-        
-        # Get next lesson for enrolled students
-        next_lesson = None
-        if is_enrolled:
-            # Get the first incomplete lesson
-            enrollment = Enrollment.objects.get(user=request.user, course=course)
-            incomplete_lessons = Lesson.objects.filter(
-                section__course=course,
-                lessonprogress__enrollment=enrollment,
-                lessonprogress__completed=False
-            ).order_by('section__order', 'order')
-            
-            if incomplete_lessons.exists():
-                next_lesson = incomplete_lessons.first()
-            else:
-                # If all lessons are complete, get the first lesson
-                first_section = course.sections.order_by('order').first()
-                if first_section:
-                    next_lesson = first_section.lessons.order_by('order').first()
-        
-        context = {
-            'course': course,
-            'is_enrolled': is_enrolled,
-            'is_teacher': is_teacher,
-            'total_students': total_students,
-            'average_rating': round(average_rating, 1),
-            'reviews': reviews,
-            'user_review': user_review,
-            'next_lesson': next_lesson,
-        }
-        
-        return render(request, 'accounts/course_detail.html', context)
-        
-    except Exception as e:
-        messages.error(request, f"Error loading course: {str(e)}")
-        return redirect('courses')
-
-@login_required
-def enroll_course(request, course_id):
-    """View to enroll in a course"""
-    course = get_object_or_404(Course, id=course_id, is_published=True)
-    
-    # Check if already enrolled
-    if Enrollment.objects.filter(user=request.user, course=course).exists():
-        messages.info(request, 'You are already enrolled in this course.')
-    else:
-        Enrollment.objects.create(user=request.user, course=course)
-        messages.success(request, f'You have successfully enrolled in {course.title}!')
-    
-    return redirect('course_detail', course_id=course.id)
+    """View for displaying course details"""
+    # This function will now use the course_detail view from courses.views
+    from courses.views import course_detail as courses_detail_view
+    return courses_detail_view(request, course_id)
 
 @login_required
 def create_course(request):

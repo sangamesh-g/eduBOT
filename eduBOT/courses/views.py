@@ -377,11 +377,21 @@ def import_quiz_questions(request, quiz_id):
 
 @login_required
 def placement_test_list(request):
-    """View for listing available placement tests"""
-    tests = PlacementTest.objects.filter(is_active=True)
+    """View for listing available placement tests and previous attempts"""
+    # Get all active placement tests
+    tests = PlacementTest.objects.filter(is_active=True).select_related('category')
+    
+    # Get user's previous attempts
+    previous_attempts = PlacementTestAttempt.objects.filter(
+        student=request.user,
+        completed=True
+    ).select_related('test').order_by('-end_time')
+    
     context = {
-        'tests': tests
+        'tests': tests,
+        'previous_attempts': previous_attempts
     }
+    
     return render(request, 'courses/placement_test_list.html', context)
 
 @login_required
@@ -389,65 +399,73 @@ def start_placement_test(request, test_id):
     """View for starting a placement test"""
     test = get_object_or_404(PlacementTest, id=test_id, is_active=True)
     
-    # Check if user has already completed this test
-    existing_attempt = PlacementTestAttempt.objects.filter(
-        student=request.user,
-        test=test,
-        completed=True
-    ).first()
-    
-    if existing_attempt:
-        messages.info(request, f"You have already completed this test. Your recommended level is {existing_attempt.recommended_level}.")
-        return redirect('placement_test_result', attempt_id=existing_attempt.id)
-    
-    # Create new attempt
+    # Create a new attempt
     attempt = PlacementTestAttempt.objects.create(
         student=request.user,
         test=test
     )
     
+    # Get all questions
+    questions = test.questions.all().order_by('order')
+    
     context = {
-        'test': test,
         'attempt': attempt,
-        'questions': test.questions.all().prefetch_related('choices')
+        'test': test,
+        'questions': questions,
+        'time_limit': test.time_limit * 60  # Convert to seconds
     }
-    return render(request, 'courses/placement_test.html', context)
+    return render(request, 'courses/take_placement_test.html', context)
 
 @login_required
 def submit_placement_test(request, attempt_id):
-    """View for submitting placement test answers"""
-    attempt = get_object_or_404(PlacementTestAttempt, id=attempt_id, student=request.user, completed=False)
+    """View for submitting a placement test"""
+    attempt = get_object_or_404(PlacementTestAttempt, id=attempt_id, student=request.user)
     
     if request.method == 'POST':
         with transaction.atomic():
-            # Save all answers
+            # Record answers
+            total_score = 0
             for question in attempt.test.questions.all():
                 choice_id = request.POST.get(f'question_{question.id}')
                 if choice_id:
-                    choice = get_object_or_404(PlacementTestChoice, id=choice_id, question=question)
+                    choice = PlacementTestChoice.objects.get(id=choice_id)
                     PlacementTestAnswer.objects.create(
                         attempt=attempt,
                         question=question,
                         choice=choice
                     )
+                    if choice.is_correct:
+                        total_score += question.marks
             
-            # Calculate score and recommended level
-            recommended_level = attempt.calculate_score()
+            # Update attempt
+            attempt.score = total_score
             attempt.end_time = timezone.now()
+            attempt.completed = True
+            
+            # Determine recommended level
+            if total_score >= attempt.test.intermediate_cutoff:
+                attempt.recommended_level = 'hard'
+            elif total_score >= attempt.test.basic_cutoff:
+                attempt.recommended_level = 'medium'
+            else:
+                attempt.recommended_level = 'basic'
+            
             attempt.save()
             
-            messages.success(request, f"Test completed! Your recommended level is {recommended_level}.")
             return redirect('placement_test_result', attempt_id=attempt.id)
     
-    return redirect('placement_test_list')
+    return redirect('start_placement_test', test_id=attempt.test.id)
 
 @login_required
 def placement_test_result(request, attempt_id):
-    """View for displaying placement test results"""
+    """View for showing placement test results"""
     attempt = get_object_or_404(PlacementTestAttempt, id=attempt_id, student=request.user)
     
-    # Get recommended courses
-    recommended_courses = Course.objects.filter(
+    # Get all answers with questions and choices
+    answers = attempt.answers.select_related('question', 'choice').all()
+    
+    # Get relevant courses based on the recommended level
+    relevant_courses = Course.objects.filter(
         category=attempt.test.category,
         level=attempt.recommended_level,
         is_published=True
@@ -455,7 +473,9 @@ def placement_test_result(request, attempt_id):
     
     context = {
         'attempt': attempt,
-        'recommended_courses': recommended_courses
+        'answers': answers,
+        'relevant_courses': relevant_courses,
+        'can_retake': True  # Allow retaking the test
     }
     return render(request, 'courses/placement_test_result.html', context)
 
@@ -548,6 +568,107 @@ def upload_placement_test(request):
         'categories': categories
     }
     return render(request, 'courses/upload_placement_test.html', context)
+
+@login_required
+def enroll_course(request, course_id):
+    """View for enrolling in a course with placement test requirement check"""
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Check if user is already enrolled
+    if Enrollment.objects.filter(user=request.user, course=course).exists():
+        messages.warning(request, "You are already enrolled in this course.")
+        return redirect('course_detail', course_id=course.id)
+    
+    # Check if placement test is required for this course category
+    required_test = PlacementTest.objects.filter(
+        category=course.category,
+        is_active=True
+    ).first()
+    
+    if required_test:
+        # Check if user has a valid placement test attempt
+        latest_attempt = PlacementTestAttempt.objects.filter(
+            student=request.user,
+            test=required_test,
+            completed=True
+        ).order_by('-end_time').first()
+        
+        if not latest_attempt:
+            messages.info(request, f"You need to take a placement test before enrolling in {course.category} courses.")
+            return redirect('start_placement_test', test_id=required_test.id)
+        
+        # Check if the course level matches the recommended level
+        if latest_attempt.recommended_level != course.level:
+            recommended_courses = Course.objects.filter(
+                category=course.category,
+                level=latest_attempt.recommended_level,
+                is_published=True
+            )
+            messages.warning(request, 
+                f"Based on your placement test score, we recommend {latest_attempt.recommended_level} level courses. "
+                "Please choose from the recommended courses below or retake the test.")
+            return render(request, 'courses/course_recommendations.html', {
+                'attempt': latest_attempt,
+                'recommended_courses': recommended_courses,
+                'current_course': course
+            })
+    
+    # Create enrollment
+    enrollment = Enrollment.objects.create(
+        user=request.user,
+        course=course
+    )
+    
+    messages.success(request, f"Successfully enrolled in {course.title}!")
+    return redirect('course_detail', course_id=course.id)
+
+@login_required
+def course_detail(request, course_id):
+    """View for displaying course details"""
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Check if user is enrolled or is the teacher
+    is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
+    is_teacher = request.user == course.teacher
+    
+    # Get placement test requirements
+    required_test = None
+    latest_attempt = None
+    if not is_enrolled and not is_teacher:
+        required_test = PlacementTest.objects.filter(
+            category=course.category,
+            is_active=True
+        ).first()
+        
+        if required_test:
+            latest_attempt = PlacementTestAttempt.objects.filter(
+                student=request.user,
+                test=required_test,
+                completed=True
+            ).order_by('-end_time').first()
+    
+    # Get course progress for enrolled students
+    progress = None
+    if is_enrolled:
+        enrollment = Enrollment.objects.get(user=request.user, course=course)
+        completed_lessons = LessonProgress.objects.filter(
+            enrollment=enrollment,
+            completed=True
+        ).count()
+        total_lessons = sum(section.lessons.count() for section in course.sections.all())
+        if total_lessons > 0:
+            progress = (completed_lessons / total_lessons) * 100
+    
+    context = {
+        'course': course,
+        'is_enrolled': is_enrolled,
+        'is_teacher': is_teacher,
+        'progress': progress,
+        'required_test': required_test,
+        'latest_attempt': latest_attempt
+    }
+    
+    return render(request, 'courses/course_detail.html', context)
 
 # Utility functions
 def get_client_ip(request):

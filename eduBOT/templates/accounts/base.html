@@ -353,7 +353,14 @@
                         <a class="nav-link" href="{% url 'home' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'courses' %}">Courses</a>
+                        <a class="nav-link {% if 'courses' in request.path %}active{% endif %}" href="{% url 'courses' %}">
+                            <i class="bi bi-book me-2"></i>Courses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'placement-tests' in request.path %}active{% endif %}" href="{% url 'placement_test_list' %}">
+                            <i class="bi bi-clipboard-check me-2"></i>Placement Tests
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>

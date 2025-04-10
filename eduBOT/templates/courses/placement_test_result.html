@@ -1,84 +1,79 @@
 {% extends 'accounts/base.html' %}
 
-{% block title %}Test Results - {{ attempt.test.title }}{% endblock %}
+{% block title %}Test Results{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">Test Results</h1>
-            
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
             <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Test Results</h4>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ attempt.test.title }}</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <ul class="list-unstyled">
-                                <li><strong>Score:</strong> {{ attempt.score }} out of {{ attempt.test.questions.count }}</li>
-                                <li><strong>Recommended Level:</strong> 
-                                    <span class="badge bg-{% if attempt.recommended_level == 'basic' %}primary{% elif attempt.recommended_level == 'medium' %}warning{% else %}danger{% endif %}">
-                                        {{ attempt.recommended_level|title }}
-                                    </span>
-                                </li>
-                                <li><strong>Completion Time:</strong> {{ attempt.end_time|date:"F j, Y, g:i a" }}</li>
-                            </ul>
+                    <div class="text-center mb-4">
+                        <h5>Your Score: {{ attempt.score }}</h5>
+                        <div class="mb-3">
+                            <span class="badge {% if attempt.recommended_level == 'basic' %}bg-success{% elif attempt.recommended_level == 'medium' %}bg-warning{% else %}bg-danger{% endif %} fs-5">
+                                Recommended Level: {{ attempt.recommended_level|title }}
+                            </span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="progress mb-3">
-                                <div class="progress-bar bg-success" role="progressbar" 
-                                     style="width: {{ attempt.score|floatformat:0 }}%"
-                                     aria-valuenow="{{ attempt.score }}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="{{ attempt.test.questions.count }}">
-                                    {{ attempt.score|floatformat:0 }}%
+                        <p class="text-muted">
+                            Test completed on {{ attempt.end_time|date:"F j, Y, g:i a" }}
+                        </p>
+                    </div>
+                    
+                    {% if relevant_courses %}
+                    <div class="mb-4">
+                        <h5>Recommended Courses</h5>
+                        <div class="row">
+                            {% for course in relevant_courses %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ course.title }}</h6>
+                                        <p class="card-text small">{{ course.description|truncatewords:20 }}</p>
+                                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-primary btn-sm">View Course</a>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="text-muted">
-                                You scored {{ attempt.score }} out of {{ attempt.test.questions.count }} questions correctly.
-                            </p>
+                            {% endfor %}
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <h2 class="mb-4">Recommended Courses</h2>
-            
-            {% if recommended_courses %}
-            <div class="row">
-                {% for course in recommended_courses %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        {% if course.thumbnail %}
-                        <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h5>Question Review</h5>
+                        {% for answer in answers %}
+                        <div class="card mb-3 {% if answer.choice.is_correct %}border-success{% else %}border-danger{% endif %}">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <span class="badge bg-secondary me-2">{{ forloop.counter }}</span>
+                                    {{ answer.question.text }}
+                                </h6>
+                                <p class="mb-2">Your answer: {{ answer.choice.text }}</p>
+                                {% if not answer.choice.is_correct %}
+                                <p class="mb-0 text-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Correct answer: {{ answer.question.choices.filter.is_correct.first.text }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'placement_test_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Tests
+                        </a>
+                        {% if can_retake %}
+                        <a href="{% url 'start_placement_test' attempt.test.id %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Retake Test
+                        </a>
                         {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ course.title }}</h5>
-                            <p class="card-text">{{ course.description|truncatewords:30 }}</p>
-                            <ul class="list-unstyled">
-                                <li><strong>Level:</strong> {{ course.level|title }}</li>
-                                <li><strong>Duration:</strong> {{ course.duration }} minutes</li>
-                                <li><strong>Students:</strong> {{ course.enrollments.count }}</li>
-                            </ul>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <a href="{% url 'course_detail' course.id %}" class="btn btn-primary">
-                                View Course
-                            </a>
-                        </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                No courses available at your recommended level. Please check back later.
-            </div>
-            {% endif %}
-            
-            <div class="text-center mt-4">
-                <a href="{% url 'placement_test_list' %}" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left"></i> Back to Tests
-                </a>
             </div>
         </div>
     </div>

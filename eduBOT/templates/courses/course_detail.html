@@ -1,0 +1,68 @@
+{% if not is_enrolled and not is_teacher %}
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-light py-3">
+        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-clipboard-check me-2"></i>Enrollment Requirements</h5>
+    </div>
+    <div class="card-body p-4">
+        {% if required_test %}
+            <div class="alert alert-primary border-0 d-flex align-items-center">
+                <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+                <div>
+                    <strong>Placement Test Required</strong>
+                    <p class="mb-0">Before enrolling in {{ course.category.name }} courses, you need to take a placement test to determine your skill level.</p>
+                </div>
+            </div>
+            
+            {% if latest_attempt %}
+                {% if latest_attempt.recommended_level == course.level %}
+                <div class="alert alert-success border-0 d-flex mb-4">
+                    <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
+                    <div>
+                        <strong>Perfect Match!</strong>
+                        <p class="mb-0">Based on your placement test score, this course is at the right level for you.</p>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'enroll_course' course.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-mortarboard me-2"></i>Enroll Now
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-warning border-0 d-flex mb-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                    <div>
+                        <strong>Level Mismatch</strong>
+                        <p class="mb-0">Your placement test recommends <strong>{{ latest_attempt.recommended_level|title }}</strong> level courses, but this course is <strong>{{ course.level|title }}</strong> level.</p>
+                    </div>
+                </div>
+                <div class="d-grid gap-3">
+                    <a href="{% url 'start_placement_test' required_test.id %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Retake Placement Test
+                    </a>
+                    <a href="{% url 'placement_test_result' latest_attempt.id %}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>View Test Results & Recommendations
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="text-center py-3">
+                <img src="https://source.unsplash.com/featured/300x200/?exam" class="img-fluid rounded mb-4" style="max-height: 180px;" alt="Placement Test">
+                <h5 class="mb-3">Ready to find your perfect level?</h5>
+                <p class="text-muted mb-4">Take a quick placement test to identify which {{ course.category.name }} courses match your current skill level.</p>
+                <a href="{% url 'start_placement_test' required_test.id %}" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-pencil-square me-2"></i>Take Placement Test
+                </a>
+            </div>
+            {% endif %}
+        {% else %}
+        <form method="post" action="{% url 'enroll_course' course.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-mortarboard me-2"></i>Enroll Now
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %} 

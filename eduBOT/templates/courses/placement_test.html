@@ -3,68 +3,134 @@
 {% block title %}{{ test.title }} - Placement Test{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">{{ test.title }}</h1>
-            
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i>
-                Time Limit: {{ test.time_limit }} minutes
-            </div>
-            
-            <form id="placementTestForm" method="post" action="{% url 'submit_placement_test' attempt.id %}">
-                {% csrf_token %}
-                
-                {% for question in questions %}
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Question {{ forloop.counter }}</h5>
-                        <p class="card-text">{{ question.text }}</p>
-                        
-                        {% if question.image %}
-                        <img src="{{ question.image.url }}" class="img-fluid mb-3" alt="Question image">
-                        {% endif %}
-                        
-                        <div class="choices">
-                            {% for choice in question.choices.all %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" 
-                                       name="question_{{ question.id }}" 
-                                       id="choice_{{ choice.id }}" 
-                                       value="{{ choice.id }}" required>
-                                <label class="form-check-label" for="choice_{{ choice.id }}">
-                                    {{ choice.text }}
-                                </label>
-                            </div>
-                            {% endfor %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">{{ test.title }}</h2>
+                        <div id="timer" class="badge bg-light text-dark fs-5 px-3 py-2">
+                            <i class="bi bi-clock me-1"></i><span id="time-display">Loading...</span>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-                
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        Submit Test
-                    </button>
+                <div class="card-body p-4">
+                    <div class="alert alert-info border-0 d-flex mb-4">
+                        <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+                        <div>
+                            <strong>Test Instructions</strong>
+                            <p class="mb-0">
+                                Answer all questions to the best of your ability. Your results will help us recommend the right courses for your skill level.
+                                You have {{ test.time_limit }} minutes to complete this test.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <form id="placementTestForm" method="post" action="{% url 'submit_placement_test' attempt.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="progress mb-4">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="progress-bar"></div>
+                        </div>
+                        
+                        {% for question in questions %}
+                        <div class="card mb-4 question-card" id="question-{{ forloop.counter }}" {% if not forloop.first %}style="display: none;"{% endif %}>
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h4 class="mb-0">Question {{ forloop.counter }}</h4>
+                                    <span class="badge bg-secondary">{{ forloop.counter }}/{{ questions|length }}</span>
+                                </div>
+                                
+                                <p class="card-text fw-bold mb-4">{{ question.text }}</p>
+                                
+                                {% if question.image %}
+                                <div class="text-center mb-4">
+                                    <img src="{{ question.image.url }}" class="img-fluid rounded shadow-sm" alt="Question image">
+                                </div>
+                                {% endif %}
+                                
+                                <div class="choices">
+                                    {% for choice in question.choices.all %}
+                                    <div class="card choice-card mb-3 border-0 bg-light">
+                                        <div class="card-body p-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                    name="question_{{ question.id }}" 
+                                                    id="choice_{{ choice.id }}" 
+                                                    value="{{ choice.id }}" required>
+                                                <label class="form-check-label w-100" for="choice_{{ choice.id }}">
+                                                    {{ choice.text }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    {% if not forloop.first %}
+                                    <button type="button" class="btn btn-outline-primary prev-question" data-question="{{ forloop.counter }}">
+                                        <i class="bi bi-arrow-left me-2"></i>Previous
+                                    </button>
+                                    {% else %}
+                                    <div></div>
+                                    {% endif %}
+                                    
+                                    {% if forloop.last %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-2"></i>Submit Test
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-primary next-question" data-question="{{ forloop.counter }}">
+                                        Next<i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
-{% block extra_js %}
+<style>
+.choice-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.choice-card:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(5px);
+}
+.form-check-input:checked + .form-check-label {
+    font-weight: bold;
+}
+</style>
+
 <script>
     // Timer functionality
-    let timeLeft = {{ test.time_limit }} * 60; // Convert to seconds
-    const timerElement = document.createElement('div');
-    timerElement.className = 'alert alert-warning position-fixed top-0 end-0 m-3';
-    document.body.appendChild(timerElement);
+    let timeLeft = {{ test.time_limit }} * 60; // Convert to minutes
+    const timeDisplay = document.getElementById('time-display');
+    const progressBar = document.getElementById('progress-bar');
+    const totalQuestions = {{ questions|length }};
+    let currentQuestion = 1;
     
     function updateTimer() {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
-        timerElement.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Update progress bar based on time remaining
+        const percentComplete = (1 - (timeLeft / ({{ test.time_limit }} * 60))) * 100;
+        if (percentComplete > 75) {
+            progressBar.classList.add('bg-danger');
+        } else if (percentComplete > 50) {
+            progressBar.classList.add('bg-warning');
+        }
         
         if (timeLeft <= 0) {
             document.getElementById('placementTestForm').submit();
@@ -76,10 +142,46 @@
     
     updateTimer();
     
+    // Navigation between questions
+    document.querySelectorAll('.next-question').forEach(button => {
+        button.addEventListener('click', function() {
+            const questionNum = parseInt(this.getAttribute('data-question'));
+            document.getElementById(`question-${questionNum}`).style.display = 'none';
+            document.getElementById(`question-${questionNum + 1}`).style.display = 'block';
+            currentQuestion = questionNum + 1;
+            updateProgress();
+        });
+    });
+    
+    document.querySelectorAll('.prev-question').forEach(button => {
+        button.addEventListener('click', function() {
+            const questionNum = parseInt(this.getAttribute('data-question'));
+            document.getElementById(`question-${questionNum}`).style.display = 'none';
+            document.getElementById(`question-${questionNum - 1}`).style.display = 'block';
+            currentQuestion = questionNum - 1;
+            updateProgress();
+        });
+    });
+    
+    // Make entire choice card clickable
+    document.querySelectorAll('.choice-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+        });
+    });
+    
+    function updateProgress() {
+        const progressPercent = (currentQuestion / totalQuestions) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+    }
+    
+    // Initialize progress bar
+    updateProgress();
+    
     // Prevent accidental navigation away
     window.onbeforeunload = function() {
         return "Are you sure you want to leave? Your progress will be lost.";
     };
 </script>
-{% endblock %}
 {% endblock %} 

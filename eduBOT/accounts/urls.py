@@ -39,7 +39,6 @@ urlpatterns = [
     path('courses/create/', views.create_course, name='create_course'),
     path('courses/<int:course_id>/', views.course_detail, name='course_detail'),
     path('courses/<int:course_id>/edit/', views.edit_course, name='edit_course'),
-    path('courses/<int:course_id>/enroll/', views.enroll_course, name='enroll_course'),
     path('courses/<int:course_id>/review/', views.submit_review, name='submit_review'),
     
     # Messages

@@ -1,0 +1,89 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ test.title }}</h4>
+                    <div id="timer" class="badge bg-light text-primary"></div>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'submit_placement_test' attempt.id %}" id="placement-test-form">
+                        {% csrf_token %}
+                        
+                        {% for question in questions %}
+                        <div class="question-container mb-4">
+                            <h5 class="mb-3">
+                                <span class="badge bg-secondary me-2">{{ forloop.counter }}</span>
+                                {{ question.text }}
+                            </h5>
+                            
+                            {% if question.image %}
+                            <img src="{{ question.image.url }}" alt="Question image" class="img-fluid mb-3">
+                            {% endif %}
+                            
+                            <div class="choices">
+                                {% for choice in question.choices.all %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" 
+                                           name="question_{{ question.id }}" 
+                                           id="choice_{{ choice.id }}"
+                                           value="{{ choice.id }}" required>
+                                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                                        {{ choice.text }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit Test</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Timer functionality
+    let timeLeft = {{ time_limit }};
+    const timerElement = document.getElementById('timer');
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            document.getElementById('placement-test-form').submit();
+        } else {
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }
+    }
+    
+    updateTimer();
+    
+    // Form submission
+    document.getElementById('placement-test-form').addEventListener('submit', function(e) {
+        const unanswered = document.querySelectorAll('.question-container').length - 
+                          document.querySelectorAll('input[type="radio"]:checked').length;
+        
+        if (unanswered > 0 && timeLeft > 0) {
+            if (!confirm(`You have ${unanswered} unanswered question(s). Are you sure you want to submit?`)) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 

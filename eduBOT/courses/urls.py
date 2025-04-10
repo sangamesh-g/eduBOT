@@ -22,4 +22,8 @@ urlpatterns = [
     path('placement-tests/attempt/<int:attempt_id>/submit/', views.submit_placement_test, name='submit_placement_test'),
     path('placement-tests/result/<int:attempt_id>/', views.placement_test_result, name='placement_test_result'),
     path('placement-tests/upload/', views.upload_placement_test, name='upload_placement_test'),
+    
+    # Course enrollment
+    path('<int:course_id>/enroll/', views.enroll_course, name='enroll_course'),
+    path('<int:course_id>/detail/', views.course_detail, name='course_detail'),
 ] 

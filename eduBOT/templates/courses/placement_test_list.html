@@ -3,43 +3,121 @@
 {% block title %}Placement Tests{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">Placement Tests</h1>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2 text-primary"></i>Placement Tests</h2>
+                <div class="bg-light px-3 py-2 rounded-pill text-muted">
+                    <i class="bi bi-info-circle me-1"></i>Find your perfect course level
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="card border-0 bg-gradient-primary text-white shadow mb-5">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="fw-bold mb-3">Why Take a Placement Test?</h3>
+                            <p class="lead mb-3">Placement tests help identify your current skill level and match you with courses that are just right for you.</p>
+                            <ul class="mb-0">
+                                <li class="mb-2">Get personalized course recommendations</li>
+                                <li class="mb-2">Avoid courses that are too easy or too difficult</li>
+                                <li>Track your progress as you learn and grow</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <img src="https://source.unsplash.com/featured/300x200/?test" class="img-fluid rounded shadow" alt="Placement Tests">
+                        </div>
+                    </div>
+                </div>
+            </div>
             
-            {% if user.is_staff %}
-            <div class="mb-4">
-                <a href="{% url 'upload_placement_test' %}" class="btn btn-primary">
-                    <i class="bi bi-upload"></i> Upload New Test
-                </a>
+            {% if previous_attempts %}
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-white p-3 border-0">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>Your Previous Attempts
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-4 py-3">Test</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3">Score</th>
+                                    <th class="px-4 py-3">Recommended Level</th>
+                                    <th class="px-4 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in previous_attempts %}
+                                <tr>
+                                    <td class="px-4 py-3">{{ attempt.test.title }}</td>
+                                    <td class="px-4 py-3">{{ attempt.end_time|date:"M d, Y" }}</td>
+                                    <td class="px-4 py-3 fw-bold">{{ attempt.score }}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge {% if attempt.recommended_level == 'basic' %}bg-success{% elif attempt.recommended_level == 'medium' %}bg-warning{% else %}bg-danger{% endif %} px-3 py-2">
+                                            {{ attempt.recommended_level|title }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <a href="{% url 'placement_test_result' attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-2"></i>View Results
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
             {% endif %}
             
-            <div class="row">
+            <h4 class="mb-4 fw-bold">Available Tests</h4>
+            <div class="row g-4">
                 {% for test in tests %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ test.title }}</h5>
-                            <p class="card-text">{{ test.description }}</p>
-                            <ul class="list-unstyled">
-                                <li><strong>Category:</strong> {{ test.category.name }}</li>
-                                <li><strong>Time Limit:</strong> {{ test.time_limit }} minutes</li>
-                                <li><strong>Questions:</strong> {{ test.questions.count }}</li>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm hover-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">{{ test.title }}</h5>
+                                <span class="badge bg-primary px-3 py-2">{{ test.category.name }}</span>
+                            </div>
+                            <p class="card-text text-muted mb-4">{{ test.description }}</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-clock text-primary me-2"></i>
+                                    <span>Time Limit: <strong>{{ test.time_limit }} minutes</strong></span>
+                                </li>
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-question-circle text-primary me-2"></i>
+                                    <span>Questions: <strong>{{ test.questions.count }}</strong></span>
+                                </li>
+                                <li class="d-flex align-items-center">
+                                    <i class="bi bi-bar-chart text-primary me-2"></i>
+                                    <span>Determines your level in <strong>{{ test.category.name }}</strong> courses</span>
+                                </li>
                             </ul>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <a href="{% url 'start_placement_test' test.id %}" class="btn btn-primary">
-                                Start Test
-                            </a>
+                            <div class="d-grid">
+                                <a href="{% url 'start_placement_test' test.id %}" class="btn btn-primary">
+                                    <i class="bi bi-pencil-square me-2"></i>Take Test
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% empty %}
                 <div class="col-12">
-                    <div class="alert alert-info">
-                        No placement tests available at the moment.
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                        <div>
+                            <h5 class="alert-heading">No Tests Available</h5>
+                            <p class="mb-0">There are no placement tests available at the moment. Please check back later.</p>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -47,4 +125,17 @@
         </div>
     </div>
 </div>
+
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+}
+</style>
 {% endblock %} 
