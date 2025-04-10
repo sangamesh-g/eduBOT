@@ -343,8 +343,10 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <img src="{% static 'logo/@eduBOT_logo.png' %}" alt="eduBOT" height="40">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                <img src="{% static 'logo/eduBOT_logo.png' %}" alt="eduBOT" height="40" class="me-2" 
+                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnPjxyZWN0IGZpbGw9IiM2NjEwZjIiIGhlaWdodD0iODAiIHdpZHRoPSIxNjAiIHJ4PSI4Ii8+PHRleHQgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgeD0iMjAiIHk9IjUwIj5lZHVCT1Q8L3RleHQ+PC9nPjwvc3ZnPg==';">
+                <span>eduBOT</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

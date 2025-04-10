@@ -135,7 +135,8 @@ class Conversation(models.Model):
     
     def other_user(self, user):
         """Legacy method for compatibility"""
-        return self.get_other_participant(user)
+        other = self.participants.exclude(id=user.id).first()
+        return other if other else None  # Ensure it returns None instead of an empty string or other non-user object
 
 class Message(models.Model):
     MESSAGE_TYPES = (

@@ -448,6 +448,13 @@ def user_messages(request):
     active_conversation = None
     conversation_messages = []
     
+    # Process conversations to ensure other_user is available
+    for conversation in conversations:
+        # Add other_user attribute to each conversation for easy access in template
+        other_user = conversation.participants.exclude(id=request.user.id).first()
+        if other_user:
+            conversation.other_participant = other_user
+    
     if 'conversation' in request.GET:
         conversation_id = request.GET.get('conversation')
         active_conversation = get_object_or_404(Conversation, id=conversation_id)
@@ -455,6 +462,9 @@ def user_messages(request):
             conversation_messages = active_conversation.messages.exclude(
                 deleted_by=request.user
             ).order_by('created_at')
+            
+            # Set other_participant for active conversation
+            active_conversation.other_participant = active_conversation.participants.exclude(id=request.user.id).first()
     
     # Get available users for new conversations (exclude current user and users already in conversations)
     already_in_conversation = []

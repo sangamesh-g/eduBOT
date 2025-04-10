@@ -223,22 +223,32 @@
                             <div class="p-3 border-bottom hover-card {% if active_conversation.id == conversation.id %}bg-light border-start border-primary border-4{% endif %}">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0 position-relative">
-                                        {% if conversation.other_user.profile_picture %}
-                                            <img src="{{ conversation.other_user.profile_picture.url }}" 
-                                                 class="rounded-circle" width="50" height="50" alt="{{ conversation.other_user.username }}">
+                                        {% if conversation.other_participant and conversation.other_participant.profile_picture %}
+                                            <img src="{{ conversation.other_participant.profile_picture.url }}" 
+                                                 class="rounded-circle" width="50" height="50" alt="{{ conversation.other_participant.username }}">
                                         {% else %}
                                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
                                                  style="width: 50px; height: 50px;">
-                                                {{ conversation.other_user.username|first|upper }}
+                                                {% if conversation.other_participant %}
+                                                    {{ conversation.other_participant.username|first|upper }}
+                                                {% else %}
+                                                    <i class="bi bi-people"></i>
+                                                {% endif %}
                                             </div>
                                         {% endif %}
-                                        {% if conversation.other_user.is_online %}
+                                        {% if conversation.other_participant and conversation.other_participant.is_online %}
                                             <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 12px; height: 12px;"></span>
                                         {% endif %}
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0 fw-bold">{{ conversation.other_user.get_full_name|default:conversation.other_user.username }}</h6>
+                                            <h6 class="mb-0 fw-bold">
+                                                {% if conversation.other_participant %}
+                                                    {{ conversation.other_participant.get_full_name|default:conversation.other_participant.username }}
+                                                {% else %}
+                                                    Group Conversation
+                                                {% endif %}
+                                            </h6>
                                             <small class="text-muted">{{ conversation.last_message.created_at|date:"g:i A" }}</small>
                                         </div>
                                         <p class="text-muted mb-0 small text-truncate">
@@ -276,24 +286,34 @@
                     <!-- Chat Header -->
                     <div class="p-3 border-bottom d-flex align-items-center">
                         <div class="flex-shrink-0">
-                            {% if active_conversation.other_user.profile_picture %}
-                                <img src="{{ active_conversation.other_user.profile_picture.url }}" 
-                                     class="rounded-circle" width="40" height="40" alt="{{ active_conversation.other_user.username }}">
+                            {% if active_conversation.other_participant and active_conversation.other_participant.profile_picture %}
+                                <img src="{{ active_conversation.other_participant.profile_picture.url }}" 
+                                     class="rounded-circle" width="40" height="40" alt="{{ active_conversation.other_participant.username }}">
                                 {% else %}
-                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" 
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
                                      style="width: 40px; height: 40px;">
-                                    {{ active_conversation.other_user.username|first|upper }}
+                                    {% if active_conversation.other_participant %}
+                                        {{ active_conversation.other_participant.username|first|upper }}
+                                    {% else %}
+                                        <i class="bi bi-people"></i>
+                                    {% endif %}
                                     </div>
                                 {% endif %}
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">{{ active_conversation.other_user.get_full_name|default:active_conversation.other_user.username }}</h6>
-                            <small class="text-muted">
-                                {% if active_conversation.other_user.is_online %}
-                                    <span class="text-success">Online</span>
+                            <h6 class="mb-0">
+                                {% if active_conversation.other_participant %}
+                                    {{ active_conversation.other_participant.get_full_name|default:active_conversation.other_participant.username }}
                                 {% else %}
-                                    Last seen {{ active_conversation.other_user.last_login|timesince }} ago
-                                        {% endif %}
+                                    Group Conversation
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">
+                                {% if active_conversation.other_participant and active_conversation.other_participant.is_online %}
+                                    <span class="text-success">Online</span>
+                                {% elif active_conversation.other_participant %}
+                                    Last seen {{ active_conversation.other_participant.last_login|timesince }} ago
+                                {% endif %}
                                     </small>
                         </div>
                     </div>
@@ -374,13 +394,13 @@
                     </div>
                     </div>
                 {% else %}
-                <div class="d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 500px;">
-                    <img src="{% static 'logo/@eduBOT_logo.png' %}" alt="eduBOT Logo" class="mb-4" style="width: 120px;">
-                    <i class="bi bi-chat-dots display-1 text-primary mb-3"></i>
-                    <h4 class="mt-2 mb-3">Select a conversation</h4>
-                    <p class="text-muted text-center px-4">Choose a conversation from the list to start messaging or<br>create a new one to connect with teachers and students.</p>
-                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#newConversationModal">
-                        <i class="bi bi-plus-circle me-2"></i>New Conversation
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5">
+                    <img src="{% static 'logo/eduBOT_logo.png' %}" alt="eduBOT" height="80" class="mb-4" 
+                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnPjxyZWN0IGZpbGw9IiM2NjEwZjIiIGhlaWdodD0iODAiIHdpZHRoPSIxNjAiIHJ4PSI4Ii8+PHRleHQgZmlsbD0iI2ZmZmZmZiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgeD0iMjAiIHk9IjUwIj5lZHVCT1Q8L3RleHQ+PC9nPjwvc3ZnPg==';">
+                    <h4 class="text-center">Select a conversation</h4>
+                    <p class="text-muted text-center mb-4">Choose a conversation from the list or start a new one</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newConversationModal">
+                        <i class="bi bi-plus-circle me-2"></i>Start New Conversation
                     </button>
                 </div>
                 {% endif %}
@@ -400,11 +420,15 @@
                 <select class="form-select" id="forward-to">
                     {% for conversation in conversations %}
                         <option value="{{ conversation.id }}">
-                            {{ conversation.other_user.get_full_name|default:conversation.other_user.username }}
+                            {% if conversation.other_participant %}
+                                {{ conversation.other_participant.get_full_name|default:conversation.other_participant.username }}
+                            {% else %}
+                                Group Conversation
+                            {% endif %}
                         </option>
-                                    {% endfor %}
-                        </select>
-                    </div>
+                    {% endfor %}
+                </select>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="forward-button">Forward</button>
