@@ -1,0 +1,439 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}AI-Powered Personalized Education Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-shape"></div>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0 fade-in">
+                <h1 class="display-4 fw-bold lh-1 mb-4">Education Powered by Artificial Intelligence</h1>
+                <p class="lead mb-4">Personalized learning experiences that adapt to your unique learning style, pace, and goals.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'register' %}?user_type=student" class="btn btn-light btn-lg rounded-pill">Start Learning</a>
+                    <a href="{% url 'register' %}?user_type=teacher" class="btn btn-outline-light btn-lg rounded-pill">Become a Teacher</a>
+                </div>
+                <div class="mt-4 d-flex align-items-center">
+                    <div class="d-flex">
+                        <div class="avatar-stack">
+                            {% for i in "12345" %}
+                                <div class="avatar-circle" style="width: 36px; height: 36px; font-size: 14px; z-index: {{ 5|add:'-'|add:forloop.counter }};">
+                                    <span>{{ "ABCDE"|make_list|slice:forloop.counter0|join:"" }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="ms-3">
+                        <p class="mb-0 text-white">Joined by <strong>10,000+</strong> students & teachers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 fade-in" style="animation-delay: 0.3s;">
+                <div class="position-relative">
+                    <img src="https://source.unsplash.com/random/800x600/?education,study" alt="Students learning" class="img-fluid rounded-4 shadow">
+                    <div class="position-absolute top-0 start-100 translate-middle bg-white p-3 rounded-4 shadow" style="width: 180px; margin-left: -90px;">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-lightning-charge-fill text-dark me-2"></i>
+                            <h6 class="mb-0">AI Recommendations</h6>
+                        </div>
+                        <p class="small text-muted mb-0">Smart content suggestions based on your learning style</p>
+                    </div>
+                    <div class="position-absolute top-100 start-0 translate-middle bg-white p-3 rounded-4 shadow" style="width: 180px; margin-top: -90px;">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-graph-up-arrow text-dark me-2"></i>
+                            <h6 class="mb-0">Progress Tracking</h6>
+                        </div>
+                        <p class="small text-muted mb-0">Analyze your learning patterns and improvement</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">AI-Powered Learning Experience</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">Our platform uses advanced artificial intelligence to provide a truly personalized education experience.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Intelligent Tutoring</h4>
+                        <p class="card-text text-muted">Our AI tutor analyzes your learning patterns and adapts content to match your pace and style.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Performance Analytics</h4>
+                        <p class="card-text text-muted">Get detailed insights into your learning progress with advanced analytics and personalized recommendations.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Adaptive Learning Paths</h4>
+                        <p class="card-text text-muted">Courses automatically adjust difficulty and content based on your performance and goals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-translate"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Content Translation</h4>
+                        <p class="card-text text-muted">Course materials automatically translated to your preferred language with AI-powered accuracy.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Smart Scheduling</h4>
+                        <p class="card-text text-muted">AI analyzes your peak productivity times and suggests optimal study schedules.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon mb-4">
+                            <i class="bi bi-chat-square-dots"></i>
+                        </div>
+                        <h4 class="card-title mb-3">24/7 AI Assistant</h4>
+                        <p class="card-text text-muted">Get instant answers to your questions with our advanced AI assistant available round the clock.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Courses Section -->
+<section class="py-5 bg-white">
+    <div class="container py-5">
+        <div class="d-flex align-items-center justify-content-between mb-5">
+            <div>
+                <h2 class="fw-bold mb-1">Popular Courses</h2>
+                <p class="text-muted mb-0">Explore our most popular learning opportunities</p>
+            </div>
+            <a href="{% url 'courses' %}" class="btn btn-outline-dark">View All Courses <i class="bi bi-arrow-right ms-2"></i></a>
+        </div>
+        
+        <div class="row g-4">
+            {% for course in courses %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 card-hover-zoom">
+                        <div class="position-relative">
+                            {% if course.thumbnail %}
+                                <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+                            {% else %}
+                                <img src="https://source.unsplash.com/random/600x400/?{{ course.title|urlencode }}" class="card-img-top" alt="{{ course.title }}">
+                            {% endif %}
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-dark">{{ course.get_level_display }}</span>
+                            </div>
+                            {% if course.discount_price %}
+                                <div class="position-absolute top-0 end-0 m-3">
+                                    <span class="badge bg-danger">Sale</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://source.unsplash.com/random/100x100/?portrait" alt="Teacher" class="rounded-circle me-2" width="32" height="32">
+                                <small>{{ course.teacher.get_full_name|default:course.teacher.username }}</small>
+                            </div>
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text text-muted">{{ course.description|truncatewords:12 }}</p>
+                            
+                            <div class="d-flex align-items-center mt-3">
+                                <div class="me-auto">
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-1 text-warning">
+                                            {% for i in "12345" %}
+                                                <i class="bi {% if forloop.counter <= 4 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                            {% endfor %}
+                                        </span>
+                                        <small class="text-muted ms-1">({{ course.enrollments.count }} students)</small>
+                                    </div>
+                                </div>
+                                <span class="text-dark fw-bold">${{ course.price }}</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white p-4 border-0">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-dark w-100">View Course</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <p>No courses available at the moment. Check back soon!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">Browse by Category</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">Explore our wide range of course categories to find the perfect match for your learning goals.</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for category in categories %}
+                <div class="col-lg-4 col-md-6">
+                    <a href="{% url 'courses' %}?category={{ category.slug }}" class="text-decoration-none">
+                        <div class="card h-100 border-0">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="category-icon me-3">
+                                        <i class="bi bi-grid text-dark"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title text-dark mb-1">{{ category.name }}</h5>
+                                        <p class="card-text text-muted mb-0">{{ category.course_count }} courses</p>
+                                    </div>
+                                    <i class="bi bi-arrow-right ms-auto text-dark"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <p>No categories available at the moment. Check back soon!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-white">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">What Our Students Say</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">Hear from our community of learners about their experience with eduBOT.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                        <p class="card-text mb-4">"The AI-powered recommendations transformed my learning experience. The platform understood exactly what I needed and adapted to my pace."</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://source.unsplash.com/random/100x100/?portrait,woman" alt="Testimonial" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0">Sarah Johnson</h6>
+                                <small class="text-muted">Data Science Student</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                        <p class="card-text mb-4">"As a teacher, eduBOT has revolutionized how I create and deliver content. The analytics help me understand exactly what my students need."</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://source.unsplash.com/random/100x100/?portrait,man" alt="Testimonial" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0">Michael Chen</h6>
+                                <small class="text-muted">Programming Instructor</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                            </span>
+                        </div>
+                        <p class="card-text mb-4">"The 24/7 AI assistant is incredibly helpful. I get instant answers to my questions at any time, which has accelerated my learning journey."</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://source.unsplash.com/random/100x100/?portrait,woman" alt="Testimonial" class="rounded-circle me-3" width="48" height="48">
+                            <div>
+                                <h6 class="mb-0">Emily Rodriguez</h6>
+                                <small class="text-muted">Marketing Student</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-3">How eduBOT Works</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">Our AI-powered platform adapts to your unique learning style in 3 simple steps.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="position-relative mb-4">
+                            <div class="step-number">1</div>
+                            <i class="bi bi-clipboard-data feature-icon"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Assessment</h4>
+                        <p class="card-text text-muted">Our AI evaluates your current skill level, learning style, and goals to create your personalized learning profile.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="position-relative mb-4">
+                            <div class="step-number">2</div>
+                            <i class="bi bi-lightbulb feature-icon"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Recommendation</h4>
+                        <p class="card-text text-muted">Based on your profile, the AI creates a customized learning path with courses and materials tailored for you.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="position-relative mb-4">
+                            <div class="step-number">3</div>
+                            <i class="bi bi-graph-up-arrow feature-icon"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Adaptation</h4>
+                        <p class="card-text text-muted">As you learn, our system continually adapts to your progress, adjusting content difficulty and suggesting new topics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-dark text-white">
+    <div class="container py-5 text-center">
+        <h2 class="fw-bold mb-4">Ready to Transform Your Learning Experience?</h2>
+        <p class="lead mb-5 mx-auto" style="max-width: 700px;">Join thousands of students and teachers who are already using eduBOT to achieve their educational goals.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'register' %}?user_type=student" class="btn btn-light btn-lg rounded-pill px-5">Get Started for Free</a>
+            <a href="{% url 'courses' %}" class="btn btn-outline-light btn-lg rounded-pill px-5">Explore Courses</a>
+        </div>
+    </div>
+</section>
+
+<!-- Add additional CSS for the home page -->
+{% block extra_css %}
+<style>
+    .avatar-stack {
+        display: flex;
+    }
+    
+    .avatar-stack .avatar-circle {
+        border: 2px solid var(--dark);
+        margin-left: -10px;
+    }
+    
+    .avatar-stack .avatar-circle:first-child {
+        margin-left: 0;
+    }
+    
+    .step-number {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 30px;
+        height: 30px;
+        background-color: var(--dark);
+        color: var(--light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+    
+    .category-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: var(--radius);
+        background-color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    @keyframes slideInFromLeft {
+        0% {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        100% {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.8s ease-out forwards;
+    }
+</style>
+{% endblock %}
+{% endblock %} 

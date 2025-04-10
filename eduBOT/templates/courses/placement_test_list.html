@@ -1,0 +1,50 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Placement Tests{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Placement Tests</h1>
+            
+            {% if user.is_staff %}
+            <div class="mb-4">
+                <a href="{% url 'upload_placement_test' %}" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Upload New Test
+                </a>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                {% for test in tests %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ test.title }}</h5>
+                            <p class="card-text">{{ test.description }}</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Category:</strong> {{ test.category.name }}</li>
+                                <li><strong>Time Limit:</strong> {{ test.time_limit }} minutes</li>
+                                <li><strong>Questions:</strong> {{ test.questions.count }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="{% url 'start_placement_test' test.id %}" class="btn btn-primary">
+                                Start Test
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No placement tests available at the moment.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

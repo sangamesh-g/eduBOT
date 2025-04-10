@@ -1,0 +1,466 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Taking: {{ quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        overflow-y: auto;
+    }
+    
+    #quiz-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .question-card {
+        display: none;
+    }
+    
+    .question-card.active {
+        display: block;
+    }
+    
+    .choice-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .choice-item:hover {
+        background-color: #f8f9ff;
+        border-color: #6c63ff;
+    }
+    
+    .choice-item.selected {
+        background-color: #eeeeff;
+        border-color: #6c63ff;
+        border-width: 2px;
+    }
+    
+    .choice-item.correct {
+        background-color: #e6ffee;
+        border-color: #28a745;
+    }
+    
+    .choice-item.incorrect {
+        background-color: #ffeef0;
+        border-color: #dc3545;
+    }
+    
+    .choice-radio {
+        display: none;
+    }
+    
+    #timer-container {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 100;
+        padding: 1rem 0;
+    }
+    
+    .progress-label {
+        font-weight: bold;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    #warning-modal .modal-body {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .tab-warning {
+        font-size: 3rem;
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" id="quiz-container">
+    <div id="timer-container" class="mb-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="mb-0">{{ quiz.title }}</h3>
+            <div class="d-flex align-items-center">
+                <span id="tab-switch-counter" class="badge bg-warning me-3" title="Tab switches detected">
+                    <i class="bi bi-window me-1"></i> <span id="switch-count">{{ attempt.tab_switches }}</span>
+                </span>
+                <div id="timer" class="fs-5 fw-bold text-danger">
+                    <i class="bi bi-stopwatch me-1"></i> <span id="time-remaining">{{ remaining_time }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-primary" id="quiz-progress" role="progressbar" style="width: 0%"></div>
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">Question <span id="current-question-num">1</span> of {{ questions_with_answers|length }}</small>
+        </div>
+    </div>
+    
+    <form id="quiz-form" method="post" action="{% url 'submit_quiz' attempt.id %}">
+        {% csrf_token %}
+        
+        <div id="question-container">
+            {% for qa in questions_with_answers %}
+                <div class="question-card {% if forloop.first %}active{% endif %}" id="question-{{ forloop.counter }}" data-question-id="{{ qa.question.id }}">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white p-4 border-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h4 class="mb-0">{{ qa.question.text }}</h4>
+                                <span class="badge bg-info">{{ qa.question.marks }} marks</span>
+                            </div>
+                        </div>
+                        
+                        {% if qa.question.image %}
+                            <img src="{{ qa.question.image.url }}" class="card-img-top" alt="Question image">
+                        {% endif %}
+                        
+                        <div class="card-body p-4">
+                            <div class="choices-container" data-answer-id="{{ qa.answer.id }}">
+                                {% for choice in qa.choices %}
+                                    <label class="choice-item d-flex align-items-center" for="choice-{{ qa.question.id }}-{{ choice.id }}">
+                                        <input type="radio" 
+                                               name="question-{{ qa.question.id }}" 
+                                               id="choice-{{ qa.question.id }}-{{ choice.id }}" 
+                                               value="{{ choice.id }}" 
+                                               class="choice-radio"
+                                               {% if qa.answer.selected_choice.id == choice.id %}checked{% endif %}>
+                                        <span class="choice-marker me-3">{{ forloop.counter|stringformat:"A" }}</span>
+                                        <span class="choice-text">{{ choice.text }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Feedback will be shown here if immediate feedback is enabled -->
+                            <div class="feedback-container mt-3 d-none"></div>
+                        </div>
+                        
+                        <div class="card-footer bg-white p-4 border-0">
+                            <div class="d-flex justify-content-between">
+                                {% if not forloop.first %}
+                                    <button type="button" class="btn btn-outline-secondary prev-btn">
+                                        <i class="bi bi-arrow-left me-2"></i> Previous
+                                    </button>
+                                {% else %}
+                                    <div></div>
+                                {% endif %}
+                                
+                                {% if not forloop.last %}
+                                    <button type="button" class="btn btn-primary next-btn">
+                                        Next <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle me-2"></i> Finish Quiz
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+    
+    <div class="d-flex justify-content-between mb-5">
+        <div class="quiz-navigation">
+            <button id="prev-btn" class="btn btn-outline-secondary" disabled>
+                <i class="bi bi-arrow-left me-2"></i> Previous
+            </button>
+            <button id="next-btn" class="btn btn-primary">
+                Next <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </div>
+        
+        <button id="submit-btn" class="btn btn-success" style="display: none;">
+            <i class="bi bi-check-circle me-2"></i> Submit All Answers
+        </button>
+    </div>
+</div>
+
+<!-- Warning Modal for Tab Switching -->
+<div class="modal fade" id="warning-modal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="tab-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <h4 id="warningModalLabel" class="mb-3">Warning: Tab Switching Detected!</h4>
+                <p>Navigating away from this quiz is not allowed and has been recorded.</p>
+                <p>Multiple instances of this behavior may be flagged for review.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Return to Quiz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionCards = document.querySelectorAll('.question-card');
+        const totalQuestions = questionCards.length;
+        let currentQuestionIndex = 0;
+        let remainingTime = {{ remaining_time }};
+        const showImmediateResults = {% if quiz.show_result_immediately %}true{% else %}false{% endif %};
+        const preventTabSwitch = {% if prevent_tab_switch %}true{% else %}false{% endif %};
+        let answeredQuestions = 0;
+        let timer;
+        
+        // Update quiz progress
+        function updateProgress() {
+            const progressBar = document.getElementById('quiz-progress');
+            const percentage = (currentQuestionIndex / (totalQuestions - 1)) * 100;
+            progressBar.style.width = `${percentage}%`;
+            
+            document.getElementById('current-question-num').textContent = currentQuestionIndex + 1;
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === totalQuestions - 1) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'inline-block';
+            } else {
+                document.getElementById('next-btn').style.display = 'inline-block';
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        }
+        
+        // Show current question
+        function showQuestion(index) {
+            questionCards.forEach((card, i) => {
+                card.classList.toggle('active', i === index);
+            });
+            
+            currentQuestionIndex = index;
+            updateProgress();
+        }
+        
+        // Event listeners for next/previous buttons
+        document.querySelectorAll('.next-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (currentQuestionIndex < totalQuestions - 1) {
+                    showQuestion(currentQuestionIndex + 1);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.prev-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (currentQuestionIndex > 0) {
+                    showQuestion(currentQuestionIndex - 1);
+                }
+            });
+        });
+        
+        document.getElementById('prev-btn').addEventListener('click', function() {
+            if (currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        });
+        
+        document.getElementById('next-btn').addEventListener('click', function() {
+            if (currentQuestionIndex < totalQuestions - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        });
+        
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to submit all your answers? You cannot change them after submission.')) {
+                document.getElementById('quiz-form').submit();
+            }
+        });
+        
+        // Choice selection
+        document.querySelectorAll('.choice-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const choicesContainer = this.closest('.choices-container');
+                const questionCard = this.closest('.question-card');
+                const questionId = questionCard.dataset.questionId;
+                const radio = this.querySelector('input[type="radio"]');
+                const choiceId = radio.value;
+                
+                // Select this choice
+                choicesContainer.querySelectorAll('.choice-item').forEach(choice => {
+                    choice.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                radio.checked = true;
+                
+                // Track time spent on this question
+                const timeSpent = Math.floor({{ quiz.time_limit }} * 60 - remainingTime);
+                
+                // Submit this answer via AJAX
+                submitAnswer(questionId, choiceId, timeSpent, choicesContainer);
+            });
+        });
+        
+        function submitAnswer(questionId, choiceId, timeSpent, choicesContainer) {
+            fetch('{% url "submit_answer" attempt.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    choice_id: choiceId,
+                    time_taken: timeSpent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Track answered questions
+                    answeredQuestions++;
+                    
+                    // Show feedback if immediate results are enabled
+                    if (showImmediateResults && data.hasOwnProperty('is_correct')) {
+                        const feedbackContainer = choicesContainer.closest('.card-body').querySelector('.feedback-container');
+                        feedbackContainer.classList.remove('d-none');
+                        
+                        if (data.is_correct) {
+                            feedbackContainer.innerHTML = `
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    ${data.feedback}
+                                </div>
+                            `;
+                            
+                            // Mark the selected choice as correct
+                            choicesContainer.querySelector('.choice-item.selected').classList.add('correct');
+                        } else {
+                            let feedbackHtml = `
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-x-circle-fill me-2"></i>
+                                    ${data.feedback}
+                                </div>
+                            `;
+                            
+                            if (data.explanation) {
+                                feedbackHtml += `
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                        <strong>Explanation:</strong> ${data.explanation}
+                                    </div>
+                                `;
+                            }
+                            
+                            feedbackContainer.innerHTML = feedbackHtml;
+                            
+                            // Mark the selected choice as incorrect
+                            choicesContainer.querySelector('.choice-item.selected').classList.add('incorrect');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting answer:', error);
+            });
+        }
+        
+        // Timer functionality
+        function updateTimer() {
+            if (remainingTime <= 0) {
+                clearInterval(timer);
+                alert('Time is up! Your answers will be submitted automatically.');
+                document.getElementById('quiz-form').submit();
+                return;
+            }
+            
+            remainingTime--;
+            
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            document.getElementById('time-remaining').textContent = 
+                `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+            // Warning when 5 minutes remaining
+            if (remainingTime === 300) {
+                alert('5 minutes remaining!');
+            }
+            // Warning when 1 minute remaining
+            else if (remainingTime === 60) {
+                alert('1 minute remaining!');
+            }
+        }
+        
+        // Start the timer
+        timer = setInterval(updateTimer, 1000);
+        updateTimer(); // Initial call
+        
+        // Anti-tab switching detection
+        if (preventTabSwitch) {
+            const warningModal = new bootstrap.Modal(document.getElementById('warning-modal'));
+            
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') {
+                    // User switched tabs or minimized the window
+                    recordTabSwitch();
+                }
+            });
+            
+            function recordTabSwitch() {
+                fetch('{% url "record_tab_switch" attempt.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('switch-count').textContent = data.tab_switches;
+                        warningModal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error recording tab switch:', error);
+                });
+            }
+        }
+        
+        // Initialize the UI
+        updateProgress();
+        
+        // Prevent form submission with Enter key
+        document.getElementById('quiz-form').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Prevent browser back/forward navigation
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', function() {
+            window.history.pushState(null, '', window.location.href);
+            alert('Please use the quiz navigation buttons instead of browser navigation.');
+        });
+        
+        // Warn user before leaving the page
+        window.addEventListener('beforeunload', function(e) {
+            if (answeredQuestions < totalQuestions) {
+                const message = 'You have not completed the quiz. If you leave, your progress may be lost.';
+                e.returnValue = message;
+                return message;
+            }
+        });
+    });
+</script>
+{% endblock %} 

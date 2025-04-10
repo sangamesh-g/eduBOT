@@ -1,0 +1,85 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ test.title }} - Placement Test{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ test.title }}</h1>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                Time Limit: {{ test.time_limit }} minutes
+            </div>
+            
+            <form id="placementTestForm" method="post" action="{% url 'submit_placement_test' attempt.id %}">
+                {% csrf_token %}
+                
+                {% for question in questions %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Question {{ forloop.counter }}</h5>
+                        <p class="card-text">{{ question.text }}</p>
+                        
+                        {% if question.image %}
+                        <img src="{{ question.image.url }}" class="img-fluid mb-3" alt="Question image">
+                        {% endif %}
+                        
+                        <div class="choices">
+                            {% for choice in question.choices.all %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" 
+                                       name="question_{{ question.id }}" 
+                                       id="choice_{{ choice.id }}" 
+                                       value="{{ choice.id }}" required>
+                                <label class="form-check-label" for="choice_{{ choice.id }}">
+                                    {{ choice.text }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        Submit Test
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Timer functionality
+    let timeLeft = {{ test.time_limit }} * 60; // Convert to seconds
+    const timerElement = document.createElement('div');
+    timerElement.className = 'alert alert-warning position-fixed top-0 end-0 m-3';
+    document.body.appendChild(timerElement);
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            document.getElementById('placementTestForm').submit();
+        } else {
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }
+    }
+    
+    updateTimer();
+    
+    // Prevent accidental navigation away
+    window.onbeforeunload = function() {
+        return "Are you sure you want to leave? Your progress will be lost.";
+    };
+</script>
+{% endblock %}
+{% endblock %} 

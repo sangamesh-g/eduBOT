@@ -1,0 +1,360 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Learning Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-container {
+        max-width: 1140px;
+        margin: 0 auto;
+    }
+    
+    .stat-card {
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        display: inline-block;
+        padding: 20px;
+        border-radius: 50%;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .chart-container {
+        min-height: 300px;
+        position: relative;
+    }
+    
+    .attempt-card {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .attempt-card:hover {
+        transform: translateX(5px);
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .progress-sm {
+        height: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-3">Your Learning Analytics</h1>
+            <p class="lead text-muted">Track your progress and performance across all your courses.</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-journal-check text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="display-5 fw-bold mb-0">{{ analytics.total_quizzes_taken }}</h3>
+                    <p class="text-muted mb-0">Quizzes Taken</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-award text-success" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="display-5 fw-bold mb-0">{{ analytics.total_quizzes_passed }}</h3>
+                    <p class="text-muted mb-0">Quizzes Passed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-graph-up text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="display-5 fw-bold mb-0">{{ analytics.average_score|floatformat:1 }}%</h3>
+                    <p class="text-muted mb-0">Average Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-clock-history text-info" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h3 class="display-5 fw-bold mb-0">{{ analytics.total_time_spent }}</h3>
+                    <p class="text-muted mb-0">Minutes Spent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Quiz Results -->
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-white p-4 border-0">
+            <h2 class="h4 mb-0">Recent Quiz Results</h2>
+        </div>
+        <div class="card-body p-4">
+            {% if recent_attempts %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Course</th>
+                                <th>Score</th>
+                                <th>Result</th>
+                                <th>Time Spent</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in recent_attempts %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-2 bg-{{ attempt.passed|yesno:'success,danger' }}" style="width: 32px; height: 32px;">
+                                                <i class="bi bi-{{ attempt.passed|yesno:'check,x' }}"></i>
+                                            </div>
+                                            <span>{{ attempt.quiz.title }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ attempt.quiz.lesson.section.course.title }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2" style="width: 80px; height: 8px;">
+                                                <div class="progress-bar bg-{{ attempt.percentage_score|floatformat:0|divisibleby:50|yesno:'danger,warning,success' }}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ attempt.percentage_score }}%" 
+                                                     aria-valuenow="{{ attempt.percentage_score }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100"></div>
+                                            </div>
+                                            <span>{{ attempt.percentage_score|floatformat:1 }}%</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ attempt.passed|yesno:'success,danger' }}">
+                                            {{ attempt.passed|yesno:'Passed,Failed' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ attempt.time_taken|floatformat:1 }} min</td>
+                                    <td>{{ attempt.end_time|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'quiz_results' attempt_id=attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-journal-text text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="mb-2">No Quiz Results Yet</h4>
+                    <p class="text-muted mb-4">Take quizzes in your courses to see your results here</p>
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                        <i class="bi bi-book me-2"></i>Go to My Courses
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-white p-4 border-0">
+            <h2 class="h4 mb-0">Performance Over Time</h2>
+        </div>
+        <div class="card-body p-4">
+            {% if recent_attempts %}
+                <canvas id="performanceChart" height="300"></canvas>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="mb-2">No Performance Data Yet</h4>
+                    <p class="text-muted">Take multiple quizzes to see your performance trend</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Strengths and Weaknesses -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white p-4 border-0">
+                    <h2 class="h4 mb-0">Your Strengths</h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if analytics.total_quizzes_taken > 0 %}
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0 border-bottom">
+                                <div>
+                                    <div class="fw-bold">Critical Thinking</div>
+                                    <p class="text-muted mb-0">You excel at analyzing complex problems</p>
+                                </div>
+                                <span class="badge bg-success rounded-pill">92%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0 border-bottom">
+                                <div>
+                                    <div class="fw-bold">Memory Recall</div>
+                                    <p class="text-muted mb-0">Strong ability to remember course content</p>
+                                </div>
+                                <span class="badge bg-success rounded-pill">87%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0">
+                                <div>
+                                    <div class="fw-bold">Consistency</div>
+                                    <p class="text-muted mb-0">Regular study habits show in your results</p>
+                                </div>
+                                <span class="badge bg-success rounded-pill">85%</span>
+                            </li>
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Complete more quizzes to identify your strengths</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white p-4 border-0">
+                    <h2 class="h4 mb-0">Areas for Improvement</h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if analytics.total_quizzes_taken > 0 %}
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0 border-bottom">
+                                <div>
+                                    <div class="fw-bold">Time Management</div>
+                                    <p class="text-muted mb-0">Try to complete quizzes with better pacing</p>
+                                </div>
+                                <span class="badge bg-warning rounded-pill">68%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0 border-bottom">
+                                <div>
+                                    <div class="fw-bold">Technical Questions</div>
+                                    <p class="text-muted mb-0">Focus on specific technical concepts</p>
+                                </div>
+                                <span class="badge bg-warning rounded-pill">72%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-3 border-0">
+                                <div>
+                                    <div class="fw-bold">Multiple Choice Strategy</div>
+                                    <p class="text-muted mb-0">Work on elimination techniques</p>
+                                </div>
+                                <span class="badge bg-warning rounded-pill">75%</span>
+                            </li>
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Complete more quizzes to identify areas for improvement</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if recent_attempts %}
+            // Setup data for chart
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [
+                        {% for attempt in recent_attempts %}
+                            '{{ attempt.end_time|date:"M d" }}',
+                        {% endfor %}
+                    ],
+                    datasets: [{
+                        label: 'Quiz Score (%)',
+                        data: [
+                            {% for attempt in recent_attempts %}
+                                {{ attempt.percentage_score|floatformat:1 }},
+                            {% endfor %}
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: [
+                            {% for attempt in recent_attempts %}
+                                '{{ attempt.passed|yesno:"rgba(40, 167, 69, 1),rgba(220, 53, 69, 1)" }}',
+                            {% endfor %}
+                        ],
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %} 

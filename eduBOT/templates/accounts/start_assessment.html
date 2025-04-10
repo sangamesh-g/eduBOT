@@ -1,0 +1,87 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Programming Assessment{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white p-4">
+                    <h2 class="card-title mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>Start Programming Assessment
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h4>What is a Programming Assessment?</h4>
+                        <p>This assessment will evaluate your programming skills through a series of coding challenges. Based on your performance, we'll recommend courses that match your skill level.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle me-2"></i>Assessment Details</h5>
+                        <ul class="mb-0">
+                            <li>The assessment will present multiple programming problems to solve.</li>
+                            <li>You'll have a limited time for each question.</li>
+                            <li>You can only use one programming language throughout the assessment.</li>
+                            <li>Once started, you must complete the assessment in one session.</li>
+                            <li>Your results will remain private and will only be used for course recommendations.</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" action="{% url 'start_assessment' %}" class="mt-4">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="language" class="form-label">Choose Programming Language</label>
+                            <select name="language" id="language" class="form-select">
+                                {% for lang_code, lang_name in languages %}
+                                    <option value="{{ lang_code }}">{{ lang_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the language you're most comfortable with.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-5">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-play-fill me-2"></i>Start Assessment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h4><i class="bi bi-lightbulb me-2 text-warning"></i>Tips for Success</h4>
+                    <ul class="mb-0">
+                        <li class="mb-2">Read each question carefully before coding.</li>
+                        <li class="mb-2">Test your code with the provided examples.</li>
+                        <li class="mb-2">Optimize your solution if time permits.</li>
+                        <li class="mb-2">Make sure your code handles edge cases.</li>
+                        <li>Don't spend too much time on a single problem.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h4><i class="bi bi-mortarboard me-2 text-primary"></i>What You'll Learn</h4>
+                    <p>Based on your assessment results, you'll discover:</p>
+                    <ul class="mb-0">
+                        <li class="mb-2">Your current programming skill level</li>
+                        <li class="mb-2">Recommended courses matching your abilities</li>
+                        <li class="mb-2">Areas where you can improve</li>
+                        <li>Personalized learning path suggestions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

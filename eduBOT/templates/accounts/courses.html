@@ -1,0 +1,223 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Courses{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-primary py-5 position-relative">
+    <div class="hero-shape"></div>
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-white">
+                <h1 class="display-4 fw-bold mb-3">Discover Courses</h1>
+                <p class="lead mb-0">Explore our wide range of courses taught by expert teachers and take your skills to the next level.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow mt-4 mt-lg-0">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">Find the perfect course</h5>
+                        <form method="get" action="{% url 'courses' %}">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control bg-light border-0" placeholder="Search for courses..." name="q" value="{{ search_query|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-select bg-light border-0" name="category">
+                                    <option value="">All Categories</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-select bg-light border-0" name="level">
+                                    <option value="">All Levels</option>
+                                    {% for level_code, level_name in level_choices %}
+                                        <option value="{{ level_code }}" {% if level_filter == level_code %}selected{% endif %}>
+                                            {{ level_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-filter me-2"></i>Apply Filters
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    {% if search_query or selected_category or level_filter %}
+        <div class="d-flex flex-wrap align-items-center mb-4">
+            <h5 class="me-3 mb-0">Active filters:</h5>
+            {% if search_query %}
+                <div class="badge bg-light text-dark py-2 px-3 mb-2 me-2 d-flex align-items-center">
+                    <span class="me-2">{{ search_query }}</span>
+                    <a href="?{% if selected_category %}category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" class="text-dark">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </div>
+            {% endif %}
+            {% if selected_category %}
+                <div class="badge bg-light text-dark py-2 px-3 mb-2 me-2 d-flex align-items-center">
+                    <span class="me-2">{{ selected_category|title }}</span>
+                    <a href="?{% if search_query %}q={{ search_query }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" class="text-dark">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </div>
+            {% endif %}
+            {% if level_filter %}
+                <div class="badge bg-light text-dark py-2 px-3 mb-2 me-2 d-flex align-items-center">
+                    <span class="me-2">
+                        {% for level_code, level_name in level_choices %}
+                            {% if level_code == level_filter %}{{ level_name }}{% endif %}
+                        {% endfor %}
+                    </span>
+                    <a href="?{% if search_query %}q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}" class="text-dark">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </div>
+            {% endif %}
+            <a href="{% url 'courses' %}" class="btn btn-sm btn-light mb-2">
+                <i class="bi bi-x me-1"></i>Clear all
+            </a>
+        </div>
+    {% endif %}
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">{{ courses.paginator.count|default:"0" }} Courses</h4>
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-sort-down me-1"></i>
+                {% if sort_by == 'price_low' %}Price: Low to High
+                {% elif sort_by == 'price_high' %}Price: High to Low
+                {% elif sort_by == 'rating' %}Highest Rated
+                {% else %}Newest
+                {% endif %}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                <li><a class="dropdown-item {% if sort_by == 'price_low' %}active{% endif %}" href="?sort_by=price_low{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">Price: Low to High</a></li>
+                <li><a class="dropdown-item {% if sort_by == 'price_high' %}active{% endif %}" href="?sort_by=price_high{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}">Price: High to Low</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        {% if courses %}
+            {% for course in courses %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-sm card-hover-zoom">
+                        <div class="position-relative">
+                            {% if course.thumbnail %}
+                                <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+                            {% else %}
+                                <img src="https://source.unsplash.com/random/800x450/?{{ course.title|urlencode }}" class="card-img-top" alt="{{ course.title }}">
+                            {% endif %}
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-{{ course.level|yesno:'success,primary,warning' }}">{{ course.get_level_display }}</span>
+                            </div>
+                            {% if course.discount_price %}
+                                <div class="position-absolute top-0 end-0 m-3">
+                                    <span class="badge bg-danger">Sale</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-4">
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text text-muted">{{ course.description|truncatewords:15 }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="d-flex align-items-center">
+                                    {% if course.teacher.teacherprofile %}
+                                        {% if course.teacher.teacherprofile.profile_picture %}
+                                            <img src="{{ course.teacher.teacherprofile.profile_picture.url }}" class="rounded-circle me-2" width="30" height="30" alt="{{ course.teacher.get_full_name }}">
+                                        {% else %}
+                                            <div class="avatar-circle me-2" style="width: 30px; height: 30px; font-size: 12px;">
+                                                <span>{{ course.teacher.username|make_list|first|upper }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                    <small class="text-muted">{{ course.teacher.get_full_name|default:course.teacher.username }}</small>
+                                </div>
+                                
+                                <div class="d-flex align-items-center">
+                                    <span class="me-1 text-warning"><i class="bi bi-star-fill"></i></span>
+                                    <small>{{ course.reviews.all|length }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white p-4 border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'course_detail' course.id %}" class="btn btn-primary">View Course</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-search" style="font-size: 4rem; color: var(--muted);"></i>
+                </div>
+                <h3>No courses found</h3>
+                <p class="text-muted mb-4">Try adjusting your search or filter criteria</p>
+                <a href="{% url 'courses' %}" class="btn btn-primary">View All Courses</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if courses.has_other_pages %}
+        <div class="d-flex justify-content-center mt-5">
+            <nav aria-label="Course pagination">
+                <ul class="pagination">
+                    {% if courses.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ courses.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ courses.number }} of {{ courses.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if courses.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ courses.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ courses.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+
+    {% if user.is_staff %}
+        <div class="mt-4 p-3 bg-light">
+            <h6>Debug Information:</h6>
+            <p>Total Courses: {{ total_courses }}</p>
+            <p>Current Page: {{ courses.number }} of {{ courses.paginator.num_pages }}</p>
+            <p>Active Filters:</p>
+            <ul>
+                {% if selected_category %}<li>Category: {{ selected_category }}</li>{% endif %}
+                {% if search_query %}<li>Search: {{ search_query }}</li>{% endif %}
+                {% if level_filter %}<li>Level: {{ level_filter }}</li>{% endif %}
+                {% if sort_by %}<li>Sort: {{ sort_by }}</li>{% endif %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

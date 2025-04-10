@@ -1,0 +1,179 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="row g-0">
+                        <div class="col-md-5 d-none d-md-block">
+                            <div class="bg-primary h-100 d-flex align-items-center justify-content-center p-4 text-white" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);">
+                                <div class="text-center p-3">
+                                    <div class="mb-4">
+                                        <i class="bi bi-mortarboard-fill display-1"></i>
+                                    </div>
+                                    <h3 class="fw-bold mb-3">Join eduBOT Today</h3>
+                                    <p class="mb-4">Start your learning journey with access to thousands of courses and expert teachers.</p>
+                                    <div class="d-flex justify-content-center gap-2 mb-3">
+                                        <span class="rounded-circle bg-white p-1 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-check-lg text-primary fs-4"></i>
+                                        </span>
+                                        <span class="rounded-circle bg-white p-1 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-book text-primary fs-4"></i>
+                                        </span>
+                                        <span class="rounded-circle bg-white p-1 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person-video3 text-primary fs-4"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="card-body p-4 p-lg-5">
+                                <div class="mb-4 text-center">
+                                    <h2 class="fw-bold mb-1">Create Account</h2>
+                                    <p class="text-muted">Fill in your details to get started</p>
+                                </div>
+                                
+                                {% if messages %}
+                                    <div class="messages">
+                                        {% for message in messages %}
+                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_first_name" class="form-label">First Name</label>
+                                            <input type="text" name="first_name" class="form-control bg-light" id="id_first_name" placeholder="John" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_last_name" class="form-label">Last Name</label>
+                                            <input type="text" name="last_name" class="form-control bg-light" id="id_last_name" placeholder="Doe" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_username" class="form-label">Username</label>
+                                        <input type="text" name="username" class="form-control bg-light" id="id_username" placeholder="johndoe" required>
+                                        <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_email" class="form-label">Email</label>
+                                        <input type="email" name="email" class="form-control bg-light" id="id_email" placeholder="john@example.com" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label d-block">Register as:</label>
+                                        <div class="d-flex gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="user_type" id="student" value="student" checked>
+                                                <label class="form-check-label" for="student">
+                                                    Student
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="user_type" id="teacher" value="teacher">
+                                                <label class="form-check-label" for="teacher">
+                                                    Teacher
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="teacher-fields" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="specialization" class="form-label">Specialization</label>
+                                            <input type="text" name="specialization" class="form-control" id="specialization">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="experience" class="form-label">Years of Experience</label>
+                                            <input type="number" name="experience" class="form-control" id="experience" min="0">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="student-fields" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="interests" class="form-label">Interests</label>
+                                            <input type="text" name="interests" class="form-control" id="interests">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="education_level" class="form-label">Education Level</label>
+                                            <select name="education_level" class="form-control" id="education_level">
+                                                <option value="">Select Education Level</option>
+                                                <option value="high_school">High School</option>
+                                                <option value="undergraduate">Undergraduate</option>
+                                                <option value="graduate">Graduate</option>
+                                                <option value="post_graduate">Post Graduate</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_password1" class="form-label">Password</label>
+                                        <input type="password" name="password1" class="form-control bg-light" id="id_password1" placeholder="Create a password" required>
+                                        <div class="form-text">Your password must be 8+ characters and contain letters and numbers.</div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label for="id_password2" class="form-label">Confirm Password</label>
+                                        <input type="password" name="password2" class="form-control bg-light" id="id_password2" placeholder="Confirm your password" required>
+                                    </div>
+                                    
+                                    <div class="mb-4 form-check">
+                                        <input type="checkbox" class="form-check-input" id="terms" required>
+                                        <label class="form-check-label" for="terms">
+                                            I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary py-3 rounded-pill">Create Account</button>
+                                    </div>
+                                </form>
+                                
+                                <div class="text-center mt-4">
+                                    <p class="text-muted">Already have an account? <a href="{% url 'login' %}" class="text-primary fw-semibold">Sign in</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeInputs = document.querySelectorAll('input[name="user_type"]');
+    const teacherFields = document.querySelector('.teacher-fields');
+    const studentFields = document.querySelector('.student-fields');
+
+    function toggleFields() {
+        const selectedType = document.querySelector('input[name="user_type"]:checked').value;
+        teacherFields.style.display = selectedType === 'teacher' ? 'block' : 'none';
+        studentFields.style.display = selectedType === 'student' ? 'block' : 'none';
+    }
+
+    userTypeInputs.forEach(input => {
+        input.addEventListener('change', toggleFields);
+    });
+
+    // Initial toggle
+    toggleFields();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,206 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}About Us{% endblock %}
+
+{% block extra_css %}
+<style>
+    .team-member-img {
+        height: 300px;
+        object-fit: cover;
+        width: 100%;
+    }
+    
+    .card-img-top {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    
+    .social-icons a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .social-icons a:hover {
+        background-color: var(--primary);
+        color: white !important;
+        transform: translateY(-3px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-4 fw-bold text-white mb-4">About eduBOT</h1>
+                <p class="lead text-white mb-4">
+                    We're on a mission to make quality education accessible to everyone, everywhere.
+                </p>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'profile_pics/team.jpg' %}" alt="Our Team" class="img-fluid rounded-3 shadow-lg" style="width: 100%; height: 400px; object-fit: cover;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Story Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="fw-bold mb-4">Our Story</h2>
+                <p class="lead text-muted mb-4">
+                    eduBOT began with a simple idea: education should be personalized, accessible, and effective.
+                </p>
+                <p class="mb-4">
+                    Founded in 2023, our platform connects students with expert teachers from around the world. We believe that everyone deserves access to quality education that adapts to their individual learning style and pace.
+                </p>
+                <p>
+                    What started as a small project has now grown into a global community of learners and educators passionate about sharing knowledge and building skills for the future.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mission & Values Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h3 class="fw-bold mb-4">Our Mission</h3>
+                <p>
+                    To empower individuals through personalized education, connecting passionate teachers with eager students in an interactive and supportive learning environment.
+                </p>
+                <p>
+                    We strive to break down barriers to education and create opportunities for lifelong learning across all disciplines and skill levels.
+                </p>
+            </div>
+            <div class="col-lg-6">
+                <h3 class="fw-bold mb-4">Our Vision</h3>
+                <p>
+                    A world where quality education is accessible to everyone, regardless of location, background, or prior educational experience.
+                </p>
+                <p>
+                    We imagine a future where learning is personalized, engaging, and directly connected to real-world skills and opportunities.
+                </p>
+            </div>
+        </div>
+        
+        <h3 class="fw-bold text-center mb-4">Our Values</h3>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-lightbulb feature-icon"></i>
+                        <h4 class="card-title mb-3">Innovation</h4>
+                        <p class="card-text">We continuously explore new teaching methods and technologies to enhance the learning experience.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-people feature-icon"></i>
+                        <h4 class="card-title mb-3">Community</h4>
+                        <p class="card-text">We foster a supportive environment where students and teachers can connect, collaborate, and grow together.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-graph-up feature-icon"></i>
+                        <h4 class="card-title mb-3">Excellence</h4>
+                        <p class="card-text">We are committed to high standards in every aspect of our platform, from course content to user experience.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="fw-bold text-center mb-5">Meet Our Team</h2>
+        <div class="row g-4">
+            <!-- Sangamesh - Founder & CEO -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <img src="{% static 'profile_pics/sangu.jpg' %}" class="card-img-top" alt="Sangamesh" style="height: 300px; object-fit: cover;">
+                    <div class="card-body text-center p-4">
+                        <h4 class="card-title">G SANGAMESH</h4>
+                        <p class="text-primary mb-3">Founder & CEO</p>
+                        <p class="card-text">Former educator with a passion for making quality education accessible to everyone.</p>
+                        <div class="social-icons mt-3">
+                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
+                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Satya - CTO -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <img src="{% static 'profile_pics/satya.jpg' %}" class="card-img-top" alt="Satya" style="height: 300px; object-fit: cover;">
+                    <div class="card-body text-center p-4">
+                        <h4 class="card-title">K SATYA SRI RAM CHARAN TEJA</h4>
+                        <p class="text-primary mb-3">CTO</p>
+                        <p class="card-text">Tech enthusiast with extensive experience in educational technology and artificial intelligence.</p>
+                        <div class="social-icons mt-3">
+                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
+                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vamshi - Head of Education -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <img src="{% static 'profile_pics/vamshi.jpg' %}" class="card-img-top" alt="Vamshi" style="height: 300px; object-fit: cover;">
+                    <div class="card-body text-center p-4">
+                        <h4 class="card-title">K SAI VAMSHI</h4>
+                        <p class="text-primary mb-3">Head of Education</p>
+                        <p class="card-text">Curriculum development expert with a background in instructional design and educational psychology.</p>
+                        <div class="social-icons mt-3">
+                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
+                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Join Us Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4">Join Our Community</h2>
+        <p class="lead mb-4">Become part of our growing network of students and teachers passionate about education.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'register' %}?user_type=student" class="btn btn-light btn-lg">Join as Student</a>
+            <a href="{% url 'register' %}?user_type=teacher" class="btn btn-outline-light btn-lg">Join as Teacher</a>
+        </div>
+    </div>
+</section>
+{% endblock %} 

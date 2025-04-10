@@ -1,0 +1,263 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Quiz Results: {{ quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        max-width: 850px;
+        margin: 0 auto;
+    }
+    
+    .score-card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .score-header {
+        padding: 2.5rem;
+        text-align: center;
+    }
+    
+    .score-circle {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background-color: white;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+    }
+    
+    .score-percentage {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .result-caption {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card {
+        border-radius: 10px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+    }
+    
+    .choice-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    .choice-item.correct-answer {
+        background-color: #e6ffee;
+        border-color: #28a745;
+    }
+    
+    .choice-item.user-selected {
+        border-width: 2px;
+    }
+    
+    .choice-item.selected-correct {
+        background-color: #e6ffee;
+        border-color: #28a745;
+    }
+    
+    .choice-item.selected-incorrect {
+        background-color: #ffeef0;
+        border-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="result-container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' attempt.quiz.lesson.section.course.id %}">{{ attempt.quiz.lesson.section.course.title }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'lesson_view' attempt.quiz.lesson.id %}">{{ attempt.quiz.lesson.title }}</a></li>
+                <li class="breadcrumb-item active">Quiz Results</li>
+            </ol>
+        </nav>
+        
+        <div class="score-card shadow-sm mb-5">
+            <div class="score-header {% if attempt.passed %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="score-circle">
+                    <div class="text-center">
+                        <div class="score-percentage {% if attempt.passed %}text-success{% else %}text-danger{% endif %}">
+                            {{ attempt.percentage_score|floatformat:0 }}%
+                        </div>
+                        <div class="text-muted">{{ attempt.score|floatformat:1 }}/{{ quiz.total_marks }}</div>
+                    </div>
+                </div>
+                <h2 class="result-caption">
+                    {% if attempt.passed %}
+                        <i class="bi bi-check-circle-fill me-2"></i> Congratulations! You Passed!
+                    {% else %}
+                        <i class="bi bi-x-circle-fill me-2"></i> You Did Not Pass
+                    {% endif %}
+                </h2>
+                <p class="mb-0">
+                    {% if attempt.passed %}
+                        You can now proceed to the next lesson.
+                    {% else %}
+                        You need {{ quiz.passing_percentage }}% to pass. Try again after reviewing your answers.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="p-4">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="stat-card bg-light">
+                            <div class="stat-icon text-primary">
+                                <i class="bi bi-stopwatch"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Time Taken</h5>
+                                <div class="h4 mb-0">{{ attempt.time_taken|floatformat:1 }} minutes</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card bg-light">
+                            <div class="stat-icon text-warning">
+                                <i class="bi bi-question-circle"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Questions</h5>
+                                <div class="h4 mb-0">{{ questions_data|length }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card bg-light">
+                            <div class="stat-icon {% if attempt.passed %}text-success{% else %}text-danger{% endif %}">
+                                <i class="bi bi-{% if attempt.passed %}check{% else %}x{% endif %}-circle"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Required</h5>
+                                <div class="h4 mb-0">{{ quiz.passing_percentage }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <div class="d-flex justify-content-center mt-3">
+                        <a href="{% url 'lesson_view' quiz.lesson.id %}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Lesson
+                        </a>
+                        
+                        {% if attempt.passed and next_lesson %}
+                            <a href="{% url 'lesson_view' next_lesson.id %}" class="btn btn-primary">
+                                Continue to Next Lesson <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'start_quiz' quiz.id %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-repeat me-2"></i>Try Again
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="mb-4">Review Your Answers</h3>
+        
+        {% for question_data in questions_data %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white p-4 border-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h4 class="mb-0">{{ question_data.question.text }}</h4>
+                        <div>
+                            <span class="badge bg-info me-2">{{ question_data.question.marks }} marks</span>
+                            {% if question_data.is_correct %}
+                                <span class="badge bg-success">Correct</span>
+                            {% else %}
+                                <span class="badge bg-danger">Incorrect</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if question_data.question.image %}
+                    <img src="{{ question_data.question.image.url }}" class="card-img-top" alt="Question image">
+                {% endif %}
+                
+                <div class="card-body p-4">
+                    <div class="choices-container">
+                        {% for choice in question_data.question.choices.all %}
+                            <div class="choice-item d-flex align-items-center 
+                                {% if choice.is_correct %}correct-answer{% endif %}
+                                {% if question_data.selected_choice == choice %}user-selected{% endif %}
+                                {% if question_data.selected_choice == choice and choice.is_correct %}selected-correct{% endif %}
+                                {% if question_data.selected_choice == choice and not choice.is_correct %}selected-incorrect{% endif %}
+                            ">
+                                <div class="d-flex align-items-center">
+                                    {% if choice.is_correct %}
+                                        <span class="badge bg-success rounded-circle me-3">
+                                            <i class="bi bi-check"></i>
+                                        </span>
+                                    {% elif question_data.selected_choice == choice %}
+                                        <span class="badge bg-danger rounded-circle me-3">
+                                            <i class="bi bi-x"></i>
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark rounded-circle me-3">
+                                            {{ forloop.counter }}
+                                        </span>
+                                    {% endif %}
+                                    <span class="choice-text">{{ choice.text }}</span>
+                                </div>
+                                
+                                {% if choice == question_data.selected_choice %}
+                                    <div class="ms-auto">
+                                        <span class="badge bg-secondary">Your Answer</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if question_data.question.explanation %}
+                        <div class="alert alert-info mt-3">
+                            <h5 class="mb-2"><i class="bi bi-info-circle-fill me-2"></i>Explanation</h5>
+                            <p class="mb-0">{{ question_data.question.explanation }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if question_data.time_taken %}
+                        <div class="mt-3 text-muted">
+                            <small><i class="bi bi-stopwatch me-1"></i> Time spent: {{ question_data.time_taken }} seconds</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="text-center mt-4 mb-5">
+            <a href="{% url 'lesson_view' quiz.lesson.id %}" class="btn btn-lg btn-primary">
+                Return to Lesson
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

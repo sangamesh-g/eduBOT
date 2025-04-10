@@ -1,0 +1,654 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Messages{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styles for messages page */
+    #conversation-list {
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+    }
+    
+    #message-container {
+        height: calc(100vh - 300px);
+        min-height: 300px;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background-color: #f7f7fc;
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+    
+    .conversation-card {
+        transition: all 0.3s ease;
+        border-radius: var(--radius);
+        margin-bottom: 0.5rem;
+    }
+    
+    .conversation-card:hover {
+        background-color: rgba(108, 99, 255, 0.05);
+    }
+    
+    .conversation-card.active {
+        background-color: rgba(108, 99, 255, 0.1);
+        border-left: 3px solid var(--primary);
+    }
+    
+    .message-time {
+        font-size: 0.7rem;
+        color: var(--muted);
+    }
+    
+    .message-input {
+        border-radius: 50px;
+        padding-left: 1.5rem;
+    }
+    
+    .message-send-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        margin: 0 1px;
+        background-color: #bbb;
+        border-radius: 50%;
+        display: inline-block;
+        animation: typing 1.4s infinite both;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0% {
+            transform: translateY(0px);
+            background-color: #bbb;
+        }
+        50% {
+            transform: translateY(-5px);
+            background-color: var(--primary);
+        }
+        100% {
+            transform: translateY(0px);
+            background-color: #bbb;
+        }
+    }
+    
+    .message-actions {
+        position: absolute;
+        right: 0;
+        top: 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .message:hover .message-actions {
+        opacity: 1;
+    }
+    
+    .message-actions button {
+        background: none;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+    }
+    
+    .message-actions button:hover {
+        color: var(--primary);
+    }
+    
+    .forwarded-message {
+        font-size: 0.8em;
+        color: var(--muted);
+        margin-bottom: 5px;
+    }
+    
+    .message-file {
+        max-width: 300px;
+        margin-top: 10px;
+    }
+    
+    .message-file img {
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    
+    .message-file video {
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    
+    .message-file audio {
+        width: 100%;
+    }
+    
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        margin-left: 10px;
+    }
+    
+    .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        margin: 0 2px;
+        background-color: var(--muted);
+        border-radius: 50%;
+        animation: typing 1s infinite;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .message-wrapper:hover .message-actions {
+        display: inline-block !important;
+    }
+    .message {
+        max-width: 70%;
+    }
+    #messages-container {
+        height: calc(100vh - 200px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Conversations List -->
+        <div class="col-md-4 border-end">
+            <div class="d-flex flex-column h-100">
+                <!-- Search Bar -->
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control bg-light border-0" placeholder="Search conversations...">
+                    </div>
+                </div>
+
+                <!-- Conversations -->
+                <div class="flex-grow-1 overflow-auto">
+                        {% for conversation in conversations %}
+                        <a href="?conversation={{ conversation.id }}" 
+                           class="text-decoration-none {% if active_conversation.id == conversation.id %}bg-light{% endif %}">
+                            <div class="p-3 border-bottom d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if conversation.other_user.profile_picture %}
+                                        <img src="{{ conversation.other_user.profile_picture.url }}" 
+                                             class="rounded-circle" width="50" height="50" alt="{{ conversation.other_user.username }}">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 50px; height: 50px;">
+                                            {{ conversation.other_user.username|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                        </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ conversation.other_user.get_full_name|default:conversation.other_user.username }}</h6>
+                                        <small class="text-muted">{{ conversation.last_message.created_at|date:"g:i A" }}</small>
+                                    </div>
+                                    <p class="text-muted mb-0 small text-truncate">
+                                        {% if conversation.last_message.is_forwarded %}
+                                            <i class="bi bi-forward-fill"></i> Forwarded: 
+                                        {% endif %}
+                                        {{ conversation.last_message.content|truncatechars:30 }}
+                                    </p>
+                                </div>
+                                {% if conversation.unread_count > 0 %}
+                                    <span class="badge bg-primary rounded-pill ms-2">{{ conversation.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                            </a>
+                        {% empty %}
+                        <div class="text-center p-5">
+                            <p class="text-muted">No conversations yet</p>
+                            </div>
+                        {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="col-md-8">
+                {% if active_conversation %}
+                <div class="d-flex flex-column h-100">
+                    <!-- Chat Header -->
+                    <div class="p-3 border-bottom d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if active_conversation.other_user.profile_picture %}
+                                <img src="{{ active_conversation.other_user.profile_picture.url }}" 
+                                     class="rounded-circle" width="40" height="40" alt="{{ active_conversation.other_user.username }}">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    {{ active_conversation.other_user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ active_conversation.other_user.get_full_name|default:active_conversation.other_user.username }}</h6>
+                            <small class="text-muted">
+                                {% if active_conversation.other_user.is_online %}
+                                    <span class="text-success">Online</span>
+                                {% else %}
+                                    Last seen {{ active_conversation.other_user.last_login|timesince }} ago
+                                        {% endif %}
+                                    </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div class="flex-grow-1 overflow-auto p-3" id="messages-container">
+                            {% for message in conversation_messages %}
+                            {% if not message.is_deleted_for_user %}
+                                <div class="message-wrapper {% if message.sender == request.user %}text-end{% endif %} mb-3">
+                                    <div class="message {% if message.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %} rounded p-2 d-inline-block">
+                                        {% if message.is_forwarded %}
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-forward-fill"></i> Forwarded
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if message.message_type == 'text' %}
+                                        {{ message.content }}
+                                        {% elif message.message_type == 'image' %}
+                                            <img src="{{ message.file.url }}" class="img-fluid rounded" style="max-height: 300px;">
+                                        {% elif message.message_type == 'video' %}
+                                            <video controls class="rounded" style="max-height: 300px;">
+                                                <source src="{{ message.file.url }}" type="video/mp4">
+                                            </video>
+                                        {% elif message.message_type == 'audio' %}
+                                            <audio controls>
+                                                <source src="{{ message.file.url }}" type="audio/mpeg">
+                                            </audio>
+                                        {% elif message.message_type == 'document' %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-file-earmark-text fs-4 me-2"></i>
+                                                <div>
+                                                    <div>{{ message.content }}</div>
+                                                    <a href="{{ message.file.url }}" class="small text-decoration-none" download>
+                                                        Download
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="message-actions d-none">
+                                            <button class="btn btn-sm btn-link text-muted forward-message" 
+                                                    data-message-id="{{ message.id }}">
+                                                <i class="bi bi-forward"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-link text-muted delete-message"
+                                                    data-message-id="{{ message.id }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        {{ message.created_at|date:"g:i A" }}
+                                            {% if message.is_read %}
+                                            <i class="bi bi-check2-all text-primary"></i>
+                                            {% else %}
+                                            <i class="bi bi-check2"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            {% endfor %}
+                    </div>
+                    
+                    <!-- Message Input -->
+                    <div class="p-3 border-top">
+                        <form id="message-form" class="d-flex align-items-center">
+                            {% csrf_token %}
+                            <input type="file" id="file-input" class="d-none" accept="image/*,video/*,audio/*,.pdf,.doc,.docx">
+                            <button type="button" class="btn btn-link text-muted" id="attach-button">
+                                <i class="bi bi-paperclip fs-4"></i>
+                            </button>
+                            <input type="text" class="form-control border-0" placeholder="Type a message..." id="message-input">
+                            <button type="submit" class="btn btn-primary ms-2">
+                                <i class="bi bi-send"></i>
+                                </button>
+                        </form>
+                    </div>
+                    </div>
+                {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                    <i class="bi bi-chat-dots display-1 text-muted"></i>
+                    <h4 class="mt-3">Select a conversation</h4>
+                    <p class="text-muted">Choose a conversation from the list to start messaging</p>
+                    </div>
+                {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Forward Message Modal -->
+<div class="modal fade" id="forwardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Forward Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+                <div class="modal-body">
+                <select class="form-select" id="forward-to">
+                    {% for conversation in conversations %}
+                        <option value="{{ conversation.id }}">
+                            {{ conversation.other_user.get_full_name|default:conversation.other_user.username }}
+                        </option>
+                                    {% endfor %}
+                        </select>
+                    </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="forward-button">Forward</button>
+                </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const fileInput = document.getElementById('file-input');
+    const attachButton = document.getElementById('attach-button');
+    const forwardModal = new bootstrap.Modal(document.getElementById('forwardModal'));
+    const messagesContainer = document.getElementById('messages-container');
+    let selectedMessageId = null;
+    let lastMessageId = null;
+    let typingTimeout = null;
+    let isTyping = false;
+
+    // Get the last message ID if messages exist
+    const messages = messagesContainer.querySelectorAll('.message-wrapper');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        lastMessageId = lastMessage.dataset.messageId;
+    }
+
+    // Auto-scroll to bottom of messages
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    scrollToBottom();
+
+    // Handle file attachment
+    attachButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            sendMessage();
+        }
+    });
+
+    // Function to render a new message
+    function renderMessage(message) {
+        const isOwnMessage = message.sender === '{{ request.user.username }}';
+        const messageHtml = `
+            <div class="message-wrapper ${isOwnMessage ? 'text-end' : ''} mb-3" data-message-id="${message.id}">
+                <div class="message ${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded p-2 d-inline-block">
+                    ${message.is_forwarded ? `
+                        <div class="small text-muted mb-1">
+                            <i class="bi bi-forward-fill"></i> Forwarded
+                        </div>
+                    ` : ''}
+                    
+                    ${renderMessageContent(message)}
+                    
+                    <div class="message-actions d-none">
+                        <button class="btn btn-sm btn-link text-muted forward-message" data-message-id="${message.id}">
+                            <i class="bi bi-forward"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link text-muted delete-message" data-message-id="${message.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="small text-muted mt-1">
+                    ${new Date(message.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    <i class="bi bi-check2${message.is_read ? '-all text-primary' : ''}"></i>
+                </div>
+            </div>
+        `;
+        messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        attachMessageEventListeners(messagesContainer.lastElementChild);
+        scrollToBottom();
+    }
+
+    // Function to render message content based on type
+    function renderMessageContent(message) {
+        switch (message.message_type) {
+            case 'text':
+                return message.content;
+            case 'image':
+                return `<img src="${message.file_url}" class="img-fluid rounded" style="max-height: 300px;">`;
+            case 'video':
+                return `
+                    <video controls class="rounded" style="max-height: 300px;">
+                        <source src="${message.file_url}" type="video/mp4">
+                    </video>
+                `;
+            case 'audio':
+                return `
+                    <audio controls>
+                        <source src="${message.file_url}" type="audio/mpeg">
+                    </audio>
+                `;
+            case 'document':
+                return `
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text fs-4 me-2"></i>
+                        <div>
+                            <div>${message.content}</div>
+                            <a href="${message.file_url}" class="small text-decoration-none" download>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+        }
+    }
+
+    // Function to attach event listeners to message actions
+    function attachMessageEventListeners(messageElement) {
+        const forwardBtn = messageElement.querySelector('.forward-message');
+        const deleteBtn = messageElement.querySelector('.delete-message');
+
+        if (forwardBtn) {
+            forwardBtn.addEventListener('click', (e) => {
+                selectedMessageId = e.target.closest('.forward-message').dataset.messageId;
+                forwardModal.show();
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async (e) => {
+                const messageId = e.target.closest('.delete-message').dataset.messageId;
+                await deleteMessage(messageId);
+            });
+        }
+    }
+
+    // Function to send a message
+    async function sendMessage() {
+        const content = messageInput.value.trim();
+        const file = fileInput.files[0];
+        
+        if (!content && !file) return;
+
+        const formData = new FormData();
+        if (content) formData.append('content', content);
+        if (file) formData.append('file', file);
+
+        const csrfToken = messageForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        try {
+            const response = await fetch(`/messages/send/{{ active_conversation.id }}/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    messageInput.value = '';
+                    fileInput.value = '';
+                    renderMessage(data.message);
+                    lastMessageId = data.message.id;
+                }
+            } else {
+                console.error('Error sending message:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    }
+
+    // Handle message submission
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await sendMessage();
+    });
+
+    // Handle message forwarding
+    document.getElementById('forward-button').addEventListener('click', async () => {
+        const conversationId = document.getElementById('forward-to').value;
+        
+        try {
+            const response = await fetch(`/messages/forward/${selectedMessageId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ conversation_id: conversationId })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                    if (data.success) {
+                    forwardModal.hide();
+                    renderMessage(data.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error forwarding message:', error);
+        }
+    });
+
+    // Function to delete a message
+    async function deleteMessage(messageId) {
+        try {
+            const response = await fetch(`/messages/delete/${messageId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            if (response.ok) {
+                const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting message:', error);
+        }
+    }
+
+    // Function to check for new messages
+    async function checkNewMessages() {
+        if (!lastMessageId) return;
+
+        try {
+            const response = await fetch(`/messages/check_new/{{ active_conversation.id }}/?last_message_id=${lastMessageId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(message => {
+                        renderMessage(message);
+                        lastMessageId = message.id;
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error checking new messages:', error);
+        }
+    }
+
+    // Function to update typing status
+    async function updateTypingStatus(isTyping) {
+        try {
+            await fetch(`/messages/typing/{{ active_conversation.id }}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ is_typing: isTyping })
+            });
+        } catch (error) {
+            console.error('Error updating typing status:', error);
+        }
+    }
+
+    // Handle typing indicator
+    messageInput.addEventListener('input', () => {
+        if (!isTyping) {
+            isTyping = true;
+            updateTypingStatus(true);
+        }
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            isTyping = false;
+            updateTypingStatus(false);
+        }, 1000);
+    });
+
+    // Start polling for new messages
+    if ({{ active_conversation.id|default:0 }} > 0) {
+        setInterval(checkNewMessages, 3000);
+    }
+    });
+</script>
+{% endblock %} 

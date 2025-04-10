@@ -1,0 +1,474 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Code Editor{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+<style>
+    .CodeMirror {
+        height: 400px;
+        border: 1px solid #ddd;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+    }
+    
+    .output-container {
+        height: 200px;
+        background-color: #282a36;
+        color: #f8f8f2;
+        padding: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        border-radius: 0.25rem;
+    }
+    
+    .code-stats {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .code-action-btn {
+        min-width: 80px;
+    }
+    
+    .question-card {
+        transition: transform 0.3s;
+    }
+    
+    .question-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .badge-easy {
+        background-color: #28a745;
+    }
+    
+    .badge-medium {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-hard {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- Code Editor Section -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-code-slash me-2 text-primary"></i>Code Editor
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <select id="language-selector" class="form-select me-2" style="width: 140px;">
+                            {% for lang in available_languages %}
+                                <option value="{{ lang }}" {% if lang == default_language %}selected{% endif %}>
+                                    {{ lang|title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="dropdown me-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-palette me-1"></i>Theme
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                                <li><a class="dropdown-item" href="#" data-theme="dracula">Dracula</a></li>
+                                <li><a class="dropdown-item" href="#" data-theme="monokai">Monokai</a></li>
+                                <li><a class="dropdown-item" href="#" data-theme="eclipse">Eclipse</a></li>
+                                <li><a class="dropdown-item" href="#" data-theme="material">Material</a></li>
+                            </ul>
+                        </div>
+                        <button id="run-btn" class="btn btn-primary code-action-btn">
+                            <i class="bi bi-play-fill me-1"></i>Run
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <textarea id="code-editor">{{ starter_code.python }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Input/Output Section -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0"><i class="bi bi-input-cursor me-2 text-primary"></i>Input</h6>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="input-area" class="form-control" rows="6" placeholder="Enter your input here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="bi bi-terminal me-2 text-primary"></i>Output</h6>
+                            <button id="clear-output-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="output-container" class="output-container">
+                                <div class="text-muted text-center py-5">
+                                    <i class="bi bi-code-square fs-1 mb-2 d-block"></i>
+                                    Run your code to see the output here
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white d-flex justify-content-between">
+                            <div class="code-stats">
+                                <span id="execution-time" class="me-3"><i class="bi bi-stopwatch me-1"></i>Time: -- ms</span>
+                                <span id="memory-used"><i class="bi bi-cpu me-1"></i>Memory: -- KB</span>
+                            </div>
+                            <div>
+                                <span id="execution-status" class="badge bg-secondary">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3">
+            <!-- Assessment Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-award fs-1"></i>
+                        </div>
+                    </div>
+                    <h5 class="card-title">Test Your Skills</h5>
+                    <p class="text-muted mb-3">Take a programming assessment to discover your skill level and get course recommendations</p>
+                    <a href="{% url 'start_assessment' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-pencil-square me-2"></i>Start Assessment
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Practice Problems -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge me-2 text-primary"></i>Practice Problems</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for question in practice_questions %}
+                            <a href="#" class="list-group-item list-group-item-action practice-question-item p-3" 
+                               data-question-id="{{ question.id }}"
+                               data-language="{{ question.programming_language }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ question.title }}</h6>
+                                    <span class="badge badge-{{ question.difficulty }}">{{ question.get_difficulty_display }}</span>
+                                </div>
+                                <p class="text-muted small mb-0">{{ question.description|truncatechars:60 }}</p>
+                            </a>
+                        {% empty %}
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-emoji-neutral mb-2 d-block fs-3"></i>
+                                No practice problems available yet
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center">
+                    <a href="#" class="text-decoration-none">View All Problems</a>
+                </div>
+            </div>
+            
+            <!-- Recent Submissions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Submissions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for submission in recent_submissions %}
+                            <div class="list-group-item p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ submission.question.title }}</h6>
+                                    <span class="badge {% if submission.status == 'accepted' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ submission.get_status_display }}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-1">{{ submission.language|title }} - {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" style="width: {{ submission.passed_test_cases|divisibleby:submission.total_test_cases|floatformat:"-1" }}%"></div>
+                                </div>
+                                <p class="text-muted small mt-1 mb-0">{{ submission.passed_test_cases }}/{{ submission.total_test_cases }} test cases passed</p>
+                            </div>
+                        {% empty %}
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-folder mb-2 d-block fs-3"></i>
+                                No submissions yet
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Modal -->
+<div class="modal fade" id="questionModal" tabindex="-1" aria-labelledby="questionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionModalLabel">Problem Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="question-modal-body">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading problem details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="solve-problem-btn">
+                    <i class="bi bi-code-slash me-1"></i>Solve Problem
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize CodeMirror
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            lineNumbers: true,
+            theme: 'dracula',
+            mode: 'python',
+            indentUnit: 4,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            lineWrapping: true
+        });
+        
+        // Language change handler
+        const languageSelector = document.getElementById('language-selector');
+        const starterCode = {
+            {% for lang, code in starter_code.items %}
+                '{{ lang }}': `{{ code|escapejs }}`,
+            {% endfor %}
+        };
+        
+        languageSelector.addEventListener('change', function() {
+            const language = this.value;
+            let mode = language;
+            
+            // Map language to CodeMirror mode
+            if (language === 'python') {
+                mode = 'python';
+            } else if (language === 'javascript') {
+                mode = 'javascript';
+            } else if (language === 'java' || language === 'cpp' || language === 'csharp') {
+                mode = 'text/x-' + (language === 'csharp' ? 'csharp' : language);
+            }
+            
+            // Update editor mode
+            codeEditor.setOption('mode', mode);
+            
+            // Set starter code if editor is empty or user confirms
+            if (codeEditor.getValue().trim() === '' || confirm('Change language and reset code?')) {
+                codeEditor.setValue(starterCode[language] || '');
+            }
+        });
+        
+        // Theme change
+        const themeLinks = document.querySelectorAll('[data-theme]');
+        themeLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const theme = this.getAttribute('data-theme');
+                codeEditor.setOption('theme', theme);
+            });
+        });
+        
+        // Run code
+        const runBtn = document.getElementById('run-btn');
+        const outputContainer = document.getElementById('output-container');
+        const inputArea = document.getElementById('input-area');
+        const executionTime = document.getElementById('execution-time');
+        const memoryUsed = document.getElementById('memory-used');
+        const executionStatus = document.getElementById('execution-status');
+        
+        runBtn.addEventListener('click', function() {
+            // Get code and language
+            const code = codeEditor.getValue();
+            const language = languageSelector.value;
+            const input = inputArea.value;
+            
+            // Update UI
+            outputContainer.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Running code...</p></div>';
+            executionStatus.textContent = 'Running';
+            executionStatus.className = 'badge bg-warning';
+            
+            // Execute code via API
+            fetch('{% url "execute_code" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    code: code,
+                    language: language,
+                    input: input
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    outputContainer.textContent = data.output;
+                    executionStatus.textContent = 'Success';
+                    executionStatus.className = 'badge bg-success';
+                } else {
+                    outputContainer.innerHTML = `<div class="text-danger">${data.error || 'Execution failed'}</div>`;
+                    executionStatus.textContent = 'Error';
+                    executionStatus.className = 'badge bg-danger';
+                }
+                
+                // Update stats
+                executionTime.innerHTML = `<i class="bi bi-stopwatch me-1"></i>Time: ${data.execution_time || '--'} ms`;
+                memoryUsed.innerHTML = `<i class="bi bi-cpu me-1"></i>Memory: ${data.memory_used || '--'} KB`;
+            })
+            .catch(error => {
+                outputContainer.innerHTML = `<div class="text-danger">Error: ${error.message}</div>`;
+                executionStatus.textContent = 'Error';
+                executionStatus.className = 'badge bg-danger';
+            });
+        });
+        
+        // Clear output
+        document.getElementById('clear-output-btn').addEventListener('click', function() {
+            outputContainer.innerHTML = '<div class="text-muted text-center py-5"><i class="bi bi-code-square fs-1 mb-2 d-block"></i>Run your code to see the output here</div>';
+            executionStatus.textContent = 'Ready';
+            executionStatus.className = 'badge bg-secondary';
+            executionTime.innerHTML = '<i class="bi bi-stopwatch me-1"></i>Time: -- ms';
+            memoryUsed.innerHTML = '<i class="bi bi-cpu me-1"></i>Memory: -- KB';
+        });
+        
+        // Handle practice question clicks
+        const practiceQuestionItems = document.querySelectorAll('.practice-question-item');
+        const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
+        const questionModalBody = document.getElementById('question-modal-body');
+        const solveBtn = document.getElementById('solve-problem-btn');
+        
+        // Store the current question
+        let currentQuestion = null;
+        
+        practiceQuestionItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const questionId = this.getAttribute('data-question-id');
+                const language = this.getAttribute('data-language');
+                
+                // Fetch question details
+                fetch(`/api/questions/${questionId}/`, {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    currentQuestion = data;
+                    
+                    // Update modal content
+                    const modalContent = `
+                        <h4>${data.title}</h4>
+                        <div class="mb-3">
+                            <span class="badge badge-${data.difficulty}">${data.difficulty}</span>
+                            <span class="badge bg-secondary ms-2">${data.programming_language}</span>
+                        </div>
+                        <div class="mb-4">
+                            ${data.description}
+                        </div>
+                        <h5>Example Test Cases</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Input</th>
+                                        <th>Expected Output</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.example_test_cases.map(testCase => `
+                                        <tr>
+                                            <td><pre>${testCase.input_data}</pre></td>
+                                            <td><pre>${testCase.expected_output}</pre></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    questionModalBody.innerHTML = modalContent;
+                    questionModal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching question details:', error);
+                    questionModalBody.innerHTML = `<div class="alert alert-danger">Error loading question details: ${error.message}</div>`;
+                    questionModal.show();
+                });
+            });
+        });
+        
+        // Solve button click handler
+        solveBtn.addEventListener('click', function() {
+            questionModal.hide();
+            
+            if (currentQuestion) {
+                // Set language and starter code
+                languageSelector.value = currentQuestion.programming_language;
+                languageSelector.dispatchEvent(new Event('change'));
+                
+                // Set starter code
+                codeEditor.setValue(currentQuestion.starter_code || starterCode[currentQuestion.programming_language] || '');
+                
+                // Focus editor
+                setTimeout(() => codeEditor.focus(), 100);
+            }
+        });
+        
+        // Helper function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %} 

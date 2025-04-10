@@ -1,0 +1,145 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Import Questions - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'course_detail' quiz.lesson.section.course.id %}">{{ quiz.lesson.section.course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'lesson_view' quiz.lesson.id %}">{{ quiz.lesson.title }}</a></li>
+                    <li class="breadcrumb-item active">Import Questions</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white p-4 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="h3 mb-0">Import Questions for {{ quiz.title }}</h1>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <h5 class="mb-2"><i class="bi bi-info-circle-fill me-2"></i>Instructions</h5>
+                        <p>Upload an Excel file containing quiz questions. The file must have the following columns:</p>
+                        <ul class="mb-0">
+                            <li><strong>question</strong> - The question text</li>
+                            <li><strong>option_a</strong> - First answer choice</li>
+                            <li><strong>option_b</strong> - Second answer choice</li>
+                            <li><strong>option_c</strong> - Third answer choice</li>
+                            <li><strong>option_d</strong> - Fourth answer choice</li>
+                            <li><strong>correct_answer</strong> - Which option is correct (a, b, c, or d)</li>
+                            <li><strong>time</strong> - Time in seconds to answer the question</li>
+                            <li><strong>marks</strong> - How many points the question is worth</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <input type="file" class="form-control" name="excel_file" id="excelFile" accept=".xlsx,.xls">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-upload me-2"></i>Import Questions
+                                </button>
+                            </div>
+                            <div class="form-text">Only Excel files (.xlsx, .xls) are allowed.</div>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h5 class="mb-3">Example Format</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>question</th>
+                                        <th>option_a</th>
+                                        <th>option_b</th>
+                                        <th>option_c</th>
+                                        <th>option_d</th>
+                                        <th>correct_answer</th>
+                                        <th>time</th>
+                                        <th>marks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>What is 2+2?</td>
+                                        <td>3</td>
+                                        <td>4</td>
+                                        <td>5</td>
+                                        <td>6</td>
+                                        <td>b</td>
+                                        <td>30</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Which planet is closest to the sun?</td>
+                                        <td>Venus</td>
+                                        <td>Earth</td>
+                                        <td>Mercury</td>
+                                        <td>Mars</td>
+                                        <td>c</td>
+                                        <td>45</td>
+                                        <td>2</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'lesson_view' quiz.lesson.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Lesson
+                            </a>
+                            <a href="#" id="downloadTemplateBtn" class="btn btn-outline-primary ms-2">
+                                <i class="bi bi-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to generate and download Excel template
+        document.getElementById('downloadTemplateBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Create template data
+            const templateData = [
+                ["question", "option_a", "option_b", "option_c", "option_d", "correct_answer", "time", "marks"],
+                ["What is 2+2?", "3", "4", "5", "6", "b", "30", "1"],
+                ["Which planet is closest to the sun?", "Venus", "Earth", "Mercury", "Mars", "c", "45", "2"]
+            ];
+            
+            // Generate CSV data
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            templateData.forEach(row => {
+                const csvRow = row.join(',');
+                csvContent += csvRow + "\r\n";
+            });
+            
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "quiz_questions_template.csv");
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            document.body.removeChild(link);
+        });
+    });
+</script>
+{% endblock %} 

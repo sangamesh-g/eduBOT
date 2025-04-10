@@ -1,0 +1,312 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if user.userprofile.profile_picture %}
+                            <img src="{{ user.userprofile.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150" alt="Profile">
+                        {% else %}
+                            <img src="https://source.unsplash.com/random/150x150/?portrait" class="rounded-circle mb-3" alt="Profile">
+                        {% endif %}
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                        <div>
+                            {% if user.userprofile.is_teacher %}
+                                <span class="badge bg-primary">Teacher</span>
+                            {% else %}
+                                <span class="badge bg-success">Student</span>
+                            {% endif %}
+                            <span class="badge bg-secondary">Member since {{ user.date_joined|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button class="btn btn-primary" id="upload-photo-btn">
+                            <i class="bi bi-camera me-2"></i>Change Profile Picture
+                        </button>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="list-group list-group-flush">
+                        <a href="#account-info" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                            <i class="bi bi-person me-2"></i>Account Information
+                        </a>
+                        <a href="#profile-info" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-file-person me-2"></i>Profile Details
+                        </a>
+                        <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-shield-lock me-2"></i>Security
+                        </a>
+                        {% if user.userprofile.is_teacher %}
+                        <a href="#bank-details" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-bank me-2"></i>Bank Details
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="account-info">
+                            <h4 class="mb-4">Account Information</h4>
+                            <form method="post" action="{% url 'update_account' %}">
+                                {% csrf_token %}
+                                
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.non_field_errors }}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="id_first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="id_first_name" name="first_name" value="{{ user.first_name }}">
+                                        {% if form.first_name.errors %}
+                                            <small class="text-danger">{{ form.first_name.errors }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="id_last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="id_last_name" name="last_name" value="{{ user.last_name }}">
+                                        {% if form.last_name.errors %}
+                                            <small class="text-danger">{{ form.last_name.errors }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="id_username" name="username" value="{{ user.username }}" readonly>
+                                    <small class="form-text text-muted">Username cannot be changed.</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="id_email" name="email" value="{{ user.email }}">
+                                    {% if form.email.errors %}
+                                        <small class="text-danger">{{ form.email.errors }}</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="profile-info">
+                            <h4 class="mb-4">Profile Details</h4>
+                            <form method="post" action="{% url 'update_profile' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="id_bio" class="form-label">Bio</label>
+                                    <textarea class="form-control" id="id_bio" name="bio" rows="4">{{ user.userprofile.bio }}</textarea>
+                                    <small class="form-text text-muted">Tell us a bit about yourself.</small>
+                                </div>
+                                
+                                {% if user.userprofile.is_teacher %}
+                                    <div class="mb-3">
+                                        <label for="id_specialization" class="form-label">Specialization</label>
+                                        <input type="text" class="form-control" id="id_specialization" name="specialization" value="{{ user.userprofile.specialization }}">
+                                        <small class="form-text text-muted">What subjects do you teach?</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_experience" class="form-label">Years of Experience</label>
+                                        <input type="number" class="form-control" id="id_experience" name="experience" value="{{ user.userprofile.experience|default:0 }}">
+                                    </div>
+                                {% else %}
+                                    <div class="mb-3">
+                                        <label for="id_interests" class="form-label">Interests</label>
+                                        <input type="text" class="form-control" id="id_interests" name="interests" value="{{ user.userprofile.interests }}">
+                                        <small class="form-text text-muted">What topics are you interested in learning?</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_education_level" class="form-label">Education Level</label>
+                                        <select class="form-select" id="id_education_level" name="education_level">
+                                            <option value="" {% if not user.userprofile.education_level %}selected{% endif %}>Select your education level</option>
+                                            <option value="high_school" {% if user.userprofile.education_level == "high_school" %}selected{% endif %}>High School</option>
+                                            <option value="bachelor" {% if user.userprofile.education_level == "bachelor" %}selected{% endif %}>Bachelor's Degree</option>
+                                            <option value="master" {% if user.userprofile.education_level == "master" %}selected{% endif %}>Master's Degree</option>
+                                            <option value="phd" {% if user.userprofile.education_level == "phd" %}selected{% endif %}>Ph.D</option>
+                                            <option value="other" {% if user.userprofile.education_level == "other" %}selected{% endif %}>Other</option>
+                                        </select>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <label for="id_location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="id_location" name="location" value="{{ user.userprofile.location }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_website" class="form-label">Website/Portfolio</label>
+                                    <input type="url" class="form-control" id="id_website" name="website" value="{{ user.userprofile.website }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Social Media</label>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text"><i class="bi bi-linkedin"></i></span>
+                                        <input type="url" class="form-control" name="linkedin" value="{{ user.userprofile.linkedin }}" placeholder="LinkedIn URL">
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text"><i class="bi bi-twitter"></i></span>
+                                        <input type="text" class="form-control" name="twitter" value="{{ user.userprofile.twitter }}" placeholder="Twitter Username">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-github"></i></span>
+                                        <input type="text" class="form-control" name="github" value="{{ user.userprofile.github }}" placeholder="GitHub Username">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Save Profile</button>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="security">
+                            <h4 class="mb-4">Security</h4>
+                            <form method="post" action="{% url 'change_password' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="id_old_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="id_old_password" name="old_password" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_new_password1" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="id_new_password1" name="new_password1" required>
+                                    <small class="form-text text-muted">
+                                        Your password must be at least 8 characters long and contain letters and numbers.
+                                    </small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_new_password2" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="id_new_password2" name="new_password2" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Change Password</button>
+                            </form>
+                            
+                            <hr class="my-4">
+                            
+                            <h5>Two-Factor Authentication</h5>
+                            <p class="text-muted">Enhance your account security by enabling two-factor authentication.</p>
+                            <button class="btn btn-outline-primary">Set Up 2FA</button>
+                        </div>
+                        
+                        {% if user.userprofile.is_teacher %}
+                        <div class="tab-pane fade" id="bank-details">
+                            <h4 class="mb-4">Bank Details</h4>
+                            <form method="post" action="{% url 'update_profile' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="id_bank_name" class="form-label">Bank Name</label>
+                                    <input type="text" class="form-control" id="id_bank_name" name="bank_name" value="{{ user.teacherprofile.bank_name }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_account_name" class="form-label">Account Holder Name</label>
+                                    <input type="text" class="form-control" id="id_account_name" name="account_name" value="{{ user.teacherprofile.account_name }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_account_number" class="form-label">Account Number</label>
+                                    <input type="text" class="form-control" id="id_account_number" name="account_number" value="{{ user.teacherprofile.account_number }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="id_ifsc_code" class="form-label">IFSC Code</label>
+                                    <input type="text" class="form-control" id="id_ifsc_code" name="ifsc_code" value="{{ user.teacherprofile.ifsc_code }}">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Save Bank Details</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle file upload for profile picture
+        const uploadBtn = document.getElementById('upload-photo-btn');
+        
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', function() {
+                // Create file input element
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+                
+                // Trigger click on file input
+                fileInput.click();
+                
+                // Handle file selection
+                fileInput.addEventListener('change', function() {
+                    if (fileInput.files && fileInput.files[0]) {
+                        // Create form data for AJAX submission
+                        const formData = new FormData();
+                        formData.append('profile_picture', fileInput.files[0]);
+                        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                        
+                        // Show loading state
+                        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+                        uploadBtn.disabled = true;
+                        
+                        // Submit via AJAX (this is just placeholder - need to implement endpoint)
+                        fetch('{% url "upload_profile_picture" %}', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Reload page to show updated profile picture
+                                window.location.reload();
+                            } else {
+                                alert('Failed to upload profile picture. Please try again.');
+                                uploadBtn.innerHTML = '<i class="bi bi-camera me-2"></i>Change Profile Picture';
+                                uploadBtn.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while uploading. Please try again.');
+                            uploadBtn.innerHTML = '<i class="bi bi-camera me-2"></i>Change Profile Picture';
+                            uploadBtn.disabled = false;
+                        });
+                    }
+                    
+                    // Remove the input from the DOM
+                    document.body.removeChild(fileInput);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 
