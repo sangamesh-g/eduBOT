@@ -133,63 +133,471 @@
     </div>
 </section>
 
-<!-- Team Section -->
-<section class="py-5">
+<!-- Meet Our Team Section -->
+<section class="team-spotlight-section">
     <div class="container">
         <h2 class="fw-bold text-center mb-5">Meet Our Team</h2>
-        <div class="row g-4">
-            <!-- Sangamesh - Founder & CEO -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <img src="{% static 'profile_pics/sangu.jpg' %}" class="card-img-top" alt="Sangamesh" style="height: 300px; object-fit: cover;">
-                    <div class="card-body text-center p-4">
-                        <h4 class="card-title">G SANGAMESH</h4>
-                        <p class="text-primary mb-3">Founder & CEO</p>
-                        <p class="card-text">Former educator with a passion for making quality education accessible to everyone.</p>
-                        <div class="social-icons mt-3">
-                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
-                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
-                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
+        
+        <div class="spotlight-container">
+            <div class="team-spotlight">
+                <div class="team-member-wrapper">
+                    <div class="member-card active" data-index="0">
+                        <div class="member-photo">
+                            <img src="{% static 'profile_pics/sangu.jpg' %}" alt="G SANGAMESH">
+                            <div class="member-role">Founder & CEO</div>
+                        </div>
+                        <div class="member-info">
+                            <h3>G SANGAMESH</h3>
+                            <p>Former educator with a passion for making quality education accessible to everyone.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="bi bi-linkedin"></i></a>
+                                <a href="#"><i class="bi bi-twitter"></i></a>
+                                <a href="#"><i class="bi bi-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-card" data-index="1">
+                        <div class="member-photo">
+                            <img src="{% static 'profile_pics/satya.jpg' %}" alt="K SATYA SRI RAM CHARAN TEJA">
+                            <div class="member-role">CTO</div>
+                        </div>
+                        <div class="member-info">
+                            <h3>K SATYA SRI RAM CHARAN TEJA</h3>
+                            <p>Tech enthusiast with extensive experience in educational technology and artificial intelligence.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="bi bi-linkedin"></i></a>
+                                <a href="#"><i class="bi bi-twitter"></i></a>
+                                <a href="#"><i class="bi bi-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-card" data-index="2">
+                        <div class="member-photo">
+                            <img src="{% static 'profile_pics/vamshi.jpg' %}" alt="K SAI VAMSHI">
+                            <div class="member-role">Head of Education</div>
+                        </div>
+                        <div class="member-info">
+                            <h3>K SAI VAMSHI</h3>
+                            <p>Curriculum development expert with a background in instructional design and educational psychology.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="bi bi-linkedin"></i></a>
+                                <a href="#"><i class="bi bi-twitter"></i></a>
+                                <a href="#"><i class="bi bi-envelope"></i></a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Satya - CTO -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <img src="{% static 'profile_pics/satya.jpg' %}" class="card-img-top" alt="Satya" style="height: 300px; object-fit: cover;">
-                    <div class="card-body text-center p-4">
-                        <h4 class="card-title">K SATYA SRI RAM CHARAN TEJA</h4>
-                        <p class="text-primary mb-3">CTO</p>
-                        <p class="card-text">Tech enthusiast with extensive experience in educational technology and artificial intelligence.</p>
-                        <div class="social-icons mt-3">
-                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
-                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
-                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
-                        </div>
-                    </div>
+            
+            <div class="spotlight-controls">
+                <button class="control-arrow prev-arrow" aria-label="Previous team member">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                
+                <div class="team-nav">
+                    <button class="nav-dot active" data-index="0" aria-label="View team member 1">
+                        <span class="dot-label">G SANGAMESH</span>
+                    </button>
+                    <button class="nav-dot" data-index="1" aria-label="View team member 2">
+                        <span class="dot-label">K SATYA SRI RAM CHARAN TEJA</span>
+                    </button>
+                    <button class="nav-dot" data-index="2" aria-label="View team member 3">
+                        <span class="dot-label">K SAI VAMSHI</span>
+                    </button>
                 </div>
-            </div>
-
-            <!-- Vamshi - Head of Education -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <img src="{% static 'profile_pics/vamshi.jpg' %}" class="card-img-top" alt="Vamshi" style="height: 300px; object-fit: cover;">
-                    <div class="card-body text-center p-4">
-                        <h4 class="card-title">K SAI VAMSHI</h4>
-                        <p class="text-primary mb-3">Head of Education</p>
-                        <p class="card-text">Curriculum development expert with a background in instructional design and educational psychology.</p>
-                        <div class="social-icons mt-3">
-                            <a href="#" class="text-primary me-2"><i class="bi bi-linkedin"></i></a>
-                            <a href="#" class="text-primary me-2"><i class="bi bi-twitter"></i></a>
-                            <a href="#" class="text-primary"><i class="bi bi-envelope"></i></a>
-                        </div>
-                    </div>
-                </div>
+                
+                <button class="control-arrow next-arrow" aria-label="Next team member">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>
+    
+    <style>
+        .team-spotlight-section {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .team-spotlight-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: radial-gradient(circle at 70% 20%, rgba(77, 161, 255, 0.1) 0%, transparent 70%),
+                        radial-gradient(circle at 30% 80%, rgba(77, 161, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .spotlight-container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .team-spotlight {
+            position: relative;
+            height: 460px;
+            margin-bottom: 2rem;
+        }
+        
+        .team-member-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .member-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            pointer-events: none;
+        }
+        
+        .member-card.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+            z-index: 5;
+        }
+        
+        .member-photo {
+            width: 40%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .member-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .member-card.active .member-photo img {
+            animation: subtle-zoom 15s infinite alternate;
+        }
+        
+        @keyframes subtle-zoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        
+        .member-role {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 2rem 1.5rem 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.4s ease 0.2s;
+        }
+        
+        .member-card.active .member-role {
+            transform: translateY(0);
+        }
+        
+        .member-info {
+            width: 60%;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .member-info h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        
+        .member-card.active .member-info h3 {
+            transform: translateY(0);
+            opacity: 1;
+            transition-delay: 0.2s;
+        }
+        
+        .member-info h3::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: #0d6efd;
+            transition: width 0.5s ease 0.7s;
+        }
+        
+        .member-card.active .member-info h3::after {
+            width: 60px;
+        }
+        
+        .member-info p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        
+        .member-card.active .member-info p {
+            transform: translateY(0);
+            opacity: 1;
+            transition-delay: 0.3s;
+        }
+        
+        .member-social {
+            display: flex;
+            gap: 1rem;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        
+        .member-card.active .member-social {
+            transform: translateY(0);
+            opacity: 1;
+            transition-delay: 0.4s;
+        }
+        
+        .member-social a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            color: #0d6efd;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .member-social a:hover {
+            background: #0d6efd;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        }
+        
+        .spotlight-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+        
+        .control-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: white;
+            color: #0d6efd;
+            font-size: 1.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .control-arrow:hover {
+            background: #0d6efd;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .team-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dee2e6;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-dot.active {
+            background: #0d6efd;
+            transform: scale(1.3);
+        }
+        
+        .dot-label {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: #343a40;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .dot-label::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #343a40 transparent transparent transparent;
+        }
+        
+        .nav-dot:hover .dot-label {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+        
+        @media (max-width: 992px) {
+            .member-card {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .member-photo, .member-info {
+                width: 100%;
+            }
+            
+            .member-photo {
+                height: 300px;
+            }
+            
+            .team-spotlight {
+                height: auto;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const memberCards = document.querySelectorAll('.member-card');
+            const navDots = document.querySelectorAll('.nav-dot');
+            const prevBtn = document.querySelector('.prev-arrow');
+            const nextBtn = document.querySelector('.next-arrow');
+            
+            let currentIndex = 0;
+            
+            function showMember(index) {
+                // Hide all members
+                memberCards.forEach(card => {
+                    card.classList.remove('active');
+                });
+                
+                // Update navigation dots
+                navDots.forEach(dot => {
+                    dot.classList.remove('active');
+                });
+                
+                // Show selected member
+                memberCards[index].classList.add('active');
+                navDots[index].classList.add('active');
+                
+                // Update current index
+                currentIndex = index;
+            }
+            
+            // Add click event to navigation dots
+            navDots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    showMember(index);
+                });
+            });
+            
+            // Add click event to prev/next buttons
+            prevBtn.addEventListener('click', function() {
+                let newIndex = currentIndex - 1;
+                if (newIndex < 0) {
+                    newIndex = memberCards.length - 1; // Loop to last member
+                }
+                showMember(newIndex);
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                let newIndex = currentIndex + 1;
+                if (newIndex >= memberCards.length) {
+                    newIndex = 0; // Loop to first member
+                }
+                showMember(newIndex);
+            });
+            
+            // Auto-rotate members every 6 seconds
+            let autoRotate = setInterval(() => {
+                let newIndex = currentIndex + 1;
+                if (newIndex >= memberCards.length) {
+                    newIndex = 0;
+                }
+                showMember(newIndex);
+            }, 6000);
+            
+            // Pause auto-rotation when interacting with controls
+            const controls = document.querySelector('.spotlight-controls');
+            controls.addEventListener('mouseenter', () => {
+                clearInterval(autoRotate);
+            });
+            
+            controls.addEventListener('mouseleave', () => {
+                autoRotate = setInterval(() => {
+                    let newIndex = currentIndex + 1;
+                    if (newIndex >= memberCards.length) {
+                        newIndex = 0;
+                    }
+                    showMember(newIndex);
+                }, 6000);
+            });
+            
+            // Support for keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                }
+            });
+        });
+    </script>
 </section>
 
 <!-- Join Us Section -->
