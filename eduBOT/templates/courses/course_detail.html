@@ -155,8 +155,8 @@
                             <div class="alert alert-primary border-0 d-flex align-items-center">
                                 <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
                                 <div>
-                                    <strong>Placement Test Required</strong>
-                                    <p class="mb-0">Before enrolling in {{ course.category.name }} courses, you need to take a placement test to determine your skill level.</p>
+                                    <strong>Eligibilty Test Required</strong>
+                                    <p class="mb-0">Before enrolling in {{ course.category.name }} courses, you need to take a Eligibilty test to determine your skill level.</p>
                                 </div>
                             </div>
                             
@@ -166,7 +166,7 @@
                                     <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
                                     <div>
                                         <strong>Perfect Match!</strong>
-                                        <p class="mb-0">Based on your placement test score, this course is at the right level for you.</p>
+                                        <p class="mb-0">Based on your Eligibilty test score, this course is at the right level for you.</p>
                                     </div>
                                 </div>
                                 <form method="post" action="{% url 'enroll_course' course.id %}">
@@ -180,12 +180,12 @@
                                     <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
                                     <div>
                                         <strong>Level Mismatch</strong>
-                                        <p class="mb-0">Your placement test recommends <strong>{{ latest_attempt.recommended_level|title }}</strong> level courses, but this course is <strong>{{ course.level|title }}</strong> level.</p>
+                                        <p class="mb-0">Your Eligibilty test recommends <strong>{{ latest_attempt.recommended_level|title }}</strong> level courses, but this course is <strong>{{ course.level|title }}</strong> level.</p>
                                     </div>
                                 </div>
                                 <div class="d-grid gap-3">
                                     <a href="{% url 'start_placement_test' required_test.id %}" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-arrow-clockwise me-2"></i>Retake Placement Test
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Retake Eligibilty Test
                                     </a>
                                     <a href="{% url 'placement_test_result' latest_attempt.id %}" class="btn btn-outline-primary">
                                         <i class="bi bi-eye me-2"></i>View Test Results & Recommendations
@@ -194,11 +194,11 @@
                                 {% endif %}
                             {% else %}
                             <div class="text-center py-3">
-                                <img src="https://source.unsplash.com/featured/300x200/?exam" class="img-fluid rounded mb-4" style="max-height: 180px;" alt="Placement Test">
+                                <img src="https://source.unsplash.com/featured/300x200/?exam" class="img-fluid rounded mb-4" style="max-height: 180px;" alt="Eligibilty Test">
                                 <h5 class="mb-3">Ready to find your perfect level?</h5>
-                                <p class="text-muted mb-4">Take a quick placement test to identify which {{ course.category.name }} courses match your current skill level.</p>
+                                <p class="text-muted mb-4">Take a quick Eligibilty test to identify which {{ course.category.name }} courses match your current skill level.</p>
                                 <a href="{% url 'start_placement_test' required_test.id %}" class="btn btn-primary btn-lg w-100">
-                                    <i class="bi bi-pencil-square me-2"></i>Take Placement Test
+                                    <i class="bi bi-pencil-square me-2"></i>Take Eligibilty Test
                                 </a>
                             </div>
                             {% endif %}
@@ -212,10 +212,10 @@
                                             <i class="bi bi-exclamation-triangle-fill text-white fs-3"></i>
                                         </div>
                                         <div>
-                                            <h5 class="fw-bold mb-2">Placement Test Required</h5>
-                                            <p class="mb-3">Before enrolling in this course, you need to take a placement test to ensure this is the right level for you.</p>
+                                            <h5 class="fw-bold mb-2">Eligibilty Test Required</h5>
+                                            <p class="mb-3">Before enrolling in this course, you need to take a Eligibilty test to ensure this is the right level for you.</p>
                                             <a href="{% url 'start_placement_test' active_test.id %}" class="btn btn-primary">
-                                                <i class="bi bi-file-earmark-text me-2"></i>Take Placement Test
+                                                <i class="bi bi-file-earmark-text me-2"></i>Take Eligibilty Test
                                             </a>
                                         </div>
                                     </div>
@@ -232,7 +232,7 @@
                                         </div>
                                         <div>
                                             <h5 class="fw-bold mb-2">Level Mismatch</h5>
-                                            <p class="mb-3">Based on your placement test, we recommend the <strong>{{ recommended_level|title }}</strong> level for you. This course is at the <strong>{{ course.level|title }}</strong> level.</p>
+                                            <p class="mb-3">Based on your Eligibilty test, we recommend the <strong>{{ recommended_level|title }}</strong> level for you. This course is at the <strong>{{ course.level|title }}</strong> level.</p>
                                             <a href="{% url 'course_recommendations' course.id test_attempt.id %}" class="btn btn-info text-white">
                                                 <i class="bi bi-stars me-2"></i>View Recommended Courses
                                             </a>
@@ -248,7 +248,7 @@
                                     <i class="bi bi-journal-check me-2"></i>Enroll in Course
                                 </button>
                                 {% if has_active_test and not has_completed_test %}
-                                <small class="form-text text-muted mt-2 d-block text-center">Complete the placement test to enable enrollment</small>
+                                <small class="form-text text-muted mt-2 d-block text-center">Complete the Eligibilty test to enable enrollment</small>
                                 {% endif %}
                             </form>
                         </div>
@@ -289,8 +289,8 @@
                                 <!-- Placement test requirement -->
                                 {% if course.level != 'basic' and not has_passed_placement_test %}
                                     <div class="alert alert-warning mb-3">
-                                        <p><strong>Note:</strong> This is an {{ course.get_level_display }} level course. We recommend taking a placement test first.</p>
-                                        <a href="{% url 'placement_test_list' %}" class="btn btn-sm btn-warning">Take Placement Test</a>
+                                        <p><strong>Note:</strong> This is an {{ course.get_level_display }} level course. We recommend taking an Eligibility test first.</p>
+                                        <a href="{% url 'placement_test_list' %}" class="btn btn-sm btn-warning">Take Eligibility Test</a>
                                     </div>
                                 {% endif %}
                                 
@@ -325,12 +325,12 @@
                                 <!-- Placement test requirement -->
                                 {% if course.level != 'basic' %}
                                     <div class="alert alert-warning mb-3">
-                                        <p><strong>Note:</strong> This is an {{ course.get_level_display }} level course. We recommend taking a placement test first.</p>
-                                        <a href="{% url 'placement_test_list' %}" class="btn btn-sm btn-warning">Take Placement Test</a>
+                                        <p><strong>Note:</strong> This is an {{ course.get_level_display }} level course. We recommend taking an Eligibility test first.</p>
+                                        <a href="{% url 'placement_test_list' %}" class="btn btn-sm btn-warning">Take Eligibility Test</a>
                                         
                                         {% if latest_placement_test %}
                                             <div class="mt-2">
-                                                <p><strong>Your latest placement test result:</strong> {{ latest_placement_test.recommended_level|title }}</p>
+                                                <p><strong>Your latest Eligibility test result:</strong> {{ latest_placement_test.recommended_level|title }}</p>
                                                 <a href="{% url 'placement_test_result' latest_placement_test.id %}" class="btn btn-sm btn-info">View Result</a>
                                             </div>
                                         {% endif %}

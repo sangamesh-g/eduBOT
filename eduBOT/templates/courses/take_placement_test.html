@@ -27,17 +27,53 @@
                             {% endif %}
                             
                             <div class="choices">
-                                {% for choice in question.choices.all %}
+                                {% if question.choice_text_1 %}
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="radio" 
                                            name="question_{{ question.id }}" 
-                                           id="choice_{{ choice.id }}"
-                                           value="{{ choice.id }}" required>
-                                    <label class="form-check-label" for="choice_{{ choice.id }}">
-                                        {{ choice.text }}
+                                           id="choice_{{ question.id }}_1"
+                                           value="1" required>
+                                    <label class="form-check-label" for="choice_{{ question.id }}_1">
+                                        {{ question.choice_text_1 }}
                                     </label>
                                 </div>
-                                {% endfor %}
+                                {% endif %}
+                                
+                                {% if question.choice_text_2 %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" 
+                                           name="question_{{ question.id }}" 
+                                           id="choice_{{ question.id }}_2"
+                                           value="2" required>
+                                    <label class="form-check-label" for="choice_{{ question.id }}_2">
+                                        {{ question.choice_text_2 }}
+                                    </label>
+                                </div>
+                                {% endif %}
+                                
+                                {% if question.choice_text_3 %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" 
+                                           name="question_{{ question.id }}" 
+                                           id="choice_{{ question.id }}_3"
+                                           value="3" required>
+                                    <label class="form-check-label" for="choice_{{ question.id }}_3">
+                                        {{ question.choice_text_3 }}
+                                    </label>
+                                </div>
+                                {% endif %}
+                                
+                                {% if question.choice_text_4 %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" 
+                                           name="question_{{ question.id }}" 
+                                           id="choice_{{ question.id }}_4"
+                                           value="4" required>
+                                    <label class="form-check-label" for="choice_{{ question.id }}_4">
+                                        {{ question.choice_text_4 }}
+                                    </label>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}

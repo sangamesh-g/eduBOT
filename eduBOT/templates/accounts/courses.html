@@ -56,14 +56,14 @@
 </div>
 
 <div class="container py-5">
-    <!-- Placement Test Prompt Banner -->
+    <!-- Eligibility Test Prompt Banner -->
     <div class="card border-0 shadow-sm mb-5 overflow-hidden">
         <div class="card-body p-0">
             <div class="row g-0">
                 <div class="col-md-8">
                     <div class="p-4 p-md-5">
                         <h3 class="fw-bold mb-3">Find Your Perfect Course Level</h3>
-                        <p class="lead mb-3">Not sure which level is right for you? Take a quick placement test to get personalized course recommendations.</p>
+                        <p class="lead mb-3">Not sure which level is right for you? Take a quick Eligibility test to get personalized course recommendations.</p>
                         <ul class="list-unstyled mb-4">
                             <li class="d-flex align-items-center mb-2">
                                 <i class="bi bi-check-circle-fill text-success me-2"></i>
@@ -79,7 +79,7 @@
                             </li>
                         </ul>
                         <a href="{% url 'placement_test_list' %}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-clipboard-check me-2"></i>Take a Placement Test
+                            <i class="bi bi-clipboard-check me-2"></i>Take an Eligibility Test
                         </a>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                             {% if course.category.placement_tests.filter.is_active %}
                                 <div class="position-absolute top-0 end-0 m-3">
                                     <span class="badge bg-info px-3 py-2">
-                                        <i class="bi bi-clipboard-check me-1"></i>Placement Test Required
+                                        <i class="bi bi-clipboard-check me-1"></i>Eligibility Test Required
                                     </span>
                                 </div>
                             {% endif %}

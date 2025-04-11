@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.html import mark_safe
 from .models import (
     Quiz, Question, Choice, QuizAttempt, Answer, StudentAnalytics,
     Course, Category, Section, Lesson, Enrollment, LessonProgress, Review,
@@ -22,8 +25,36 @@ class QuestionInline(admin.TabularInline):
     extra = 1
     show_change_link = True
 
+class QuizAdminForm(forms.ModelForm):
+    bulk_questions = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 15, 'cols': 80}),
+        required=False,
+        help_text=mark_safe(
+            """Add multiple questions at once. Use the following format:<br>
+            Q: Question text here<br>
+            A: Option 1 text [correct]<br>
+            B: Option 2 text<br>
+            C: Option 3 text<br>
+            D: Option 4 text<br>
+            MARKS: 2<br>
+            TIME: 60<br>
+            <br>
+            Q: Next question text<br>
+            A: Option 1 text<br>
+            B: Option 2 text [correct]<br>
+            ... and so on.<br>
+            <br>
+            Mark correct answers with [correct]. MARKS and TIME are optional."""
+        )
+    )
+    
+    class Meta:
+        model = Quiz
+        fields = '__all__'
+
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
+    form = QuizAdminForm
     list_display = ('title', 'lesson', 'difficulty', 'passing_percentage', 'time_limit', 'total_marks')
     list_filter = ('difficulty', 'lesson__section__course')
     search_fields = ('title', 'lesson__title')
@@ -39,6 +70,10 @@ class QuizAdmin(admin.ModelAdmin):
         ('Security', {
             'fields': ('prevent_tab_switch',),
             'classes': ('collapse',)
+        }),
+        ('Bulk Add Questions', {
+            'fields': ('bulk_questions',),
+            'classes': ('wide',)
         })
     )
     
@@ -46,6 +81,85 @@ class QuizAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields['lesson'].widget.can_add_related = False
         return form
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        # Process bulk questions if provided
+        bulk_questions = form.cleaned_data.get('bulk_questions')
+        if bulk_questions:
+            questions = []
+            choices = []
+            current_question = None
+            question_order = Question.objects.filter(quiz=obj).count()
+            
+            lines = bulk_questions.strip().split('\n')
+            marks = 1  # Default marks
+            time_seconds = 60  # Default time
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line.startswith('Q:'):
+                    # Save previous question if exists
+                    if current_question and len(choices) > 0:
+                        current_question.save()
+                        for choice in choices:
+                            choice.question = current_question
+                            choice.save()
+                    
+                    # Create new question
+                    question_text = line[2:].strip()
+                    question_order += 1
+                    current_question = Question(
+                        quiz=obj,
+                        text=question_text,
+                        marks=marks,
+                        time_seconds=time_seconds,
+                        order=question_order
+                    )
+                    choices = []
+                    marks = 1  # Reset to default
+                    time_seconds = 60  # Reset to default
+                
+                elif line.startswith(('A:', 'B:', 'C:', 'D:', 'E:', 'F:')):
+                    if current_question:
+                        choice_text = line[2:].strip()
+                        is_correct = False
+                        
+                        if '[correct]' in choice_text:
+                            is_correct = True
+                            choice_text = choice_text.replace('[correct]', '').strip()
+                        
+                        choice = Choice(
+                            question=current_question,  # This will be updated after question is saved
+                            text=choice_text,
+                            is_correct=is_correct
+                        )
+                        choices.append(choice)
+                
+                elif line.startswith('MARKS:'):
+                    marks_str = line[6:].strip()
+                    try:
+                        marks = float(marks_str)
+                    except ValueError:
+                        marks = 1
+                
+                elif line.startswith('TIME:'):
+                    time_str = line[5:].strip()
+                    try:
+                        time_seconds = int(time_str)
+                    except ValueError:
+                        time_seconds = 60
+            
+            # Save the last question
+            if current_question and len(choices) > 0:
+                current_question.save()
+                for choice in choices:
+                    choice.question = current_question
+                    choice.save()
 
 class AnswerInline(admin.TabularInline):
     model = Answer
@@ -135,19 +249,40 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ('rating', 'course')
     search_fields = ('user__username', 'course__title', 'comment')
 
-class PlacementTestChoiceInline(admin.TabularInline):
-    model = PlacementTestChoice
-    extra = 4
-    min_num = 4
-    max_num = 4
-
 class PlacementTestQuestionInline(admin.TabularInline):
     model = PlacementTestQuestion
     extra = 1
-    inlines = [PlacementTestChoiceInline]
+    fields = ('text', 'marks', 'order', 'choice_text_1', 'choice_text_2', 'choice_text_3', 'choice_text_4', 'correct_choice')
+
+class PlacementTestAdminForm(forms.ModelForm):
+    bulk_questions = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 15, 'cols': 80}),
+        required=False,
+        help_text=mark_safe(
+            """Add multiple questions at once. Use the following format:<br>
+            Q: Question text here<br>
+            A: Option 1 text [correct]<br>
+            B: Option 2 text<br>
+            C: Option 3 text<br>
+            D: Option 4 text<br>
+            MARKS: 1<br>
+            <br>
+            Q: Next question text<br>
+            A: Option 1 text<br>
+            B: Option 2 text [correct]<br>
+            ... and so on.<br>
+            <br>
+            Mark correct answers with [correct]. MARKS is optional."""
+        )
+    )
+    
+    class Meta:
+        model = PlacementTest
+        fields = '__all__'
 
 @admin.register(PlacementTest)
 class PlacementTestAdmin(admin.ModelAdmin):
+    form = PlacementTestAdminForm
     list_display = ('title', 'category', 'time_limit', 'basic_cutoff', 'intermediate_cutoff', 'is_active')
     list_filter = ('category', 'is_active')
     search_fields = ('title', 'description')
@@ -159,8 +294,90 @@ class PlacementTestAdmin(admin.ModelAdmin):
         }),
         ('Settings', {
             'fields': ('time_limit', 'basic_cutoff', 'intermediate_cutoff')
+        }),
+        ('Bulk Add Questions', {
+            'fields': ('bulk_questions',),
+            'classes': ('wide',)
         })
     )
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        # Process bulk questions if provided
+        bulk_questions = form.cleaned_data.get('bulk_questions')
+        if bulk_questions:
+            question_order = PlacementTestQuestion.objects.filter(test=obj).count()
+            
+            lines = bulk_questions.strip().split('\n')
+            marks = 1  # Default marks
+            
+            current_question = None
+            choices = []
+            correct_choice = None
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line.startswith('Q:'):
+                    # Save previous question if exists
+                    if current_question and len(choices) > 0:
+                        current_question.choice_text_1 = choices[0]['text'] if len(choices) > 0 else ""
+                        current_question.choice_text_2 = choices[1]['text'] if len(choices) > 1 else ""
+                        current_question.choice_text_3 = choices[2]['text'] if len(choices) > 2 else ""
+                        current_question.choice_text_4 = choices[3]['text'] if len(choices) > 3 else ""
+                        current_question.correct_choice = correct_choice
+                        current_question.save()
+                    
+                    # Create new question
+                    question_text = line[2:].strip()
+                    question_order += 1
+                    current_question = PlacementTestQuestion(
+                        test=obj,
+                        text=question_text,
+                        marks=marks,
+                        order=question_order
+                    )
+                    choices = []
+                    correct_choice = None
+                    marks = 1  # Reset to default
+                
+                elif line.startswith(('A:', 'B:', 'C:', 'D:')):
+                    if current_question:
+                        choice_text = line[2:].strip()
+                        is_correct = False
+                        
+                        if '[correct]' in choice_text:
+                            is_correct = True
+                            choice_text = choice_text.replace('[correct]', '').strip()
+                        
+                        choice_index = ord(line[0]) - ord('A') + 1  # A=1, B=2, C=3, D=4
+                        
+                        choices.append({
+                            'text': choice_text,
+                            'is_correct': is_correct
+                        })
+                        
+                        if is_correct:
+                            correct_choice = choice_index
+                
+                elif line.startswith('MARKS:'):
+                    marks_str = line[6:].strip()
+                    try:
+                        marks = float(marks_str)
+                    except ValueError:
+                        marks = 1
+            
+            # Save the last question
+            if current_question and len(choices) > 0:
+                current_question.choice_text_1 = choices[0]['text'] if len(choices) > 0 else ""
+                current_question.choice_text_2 = choices[1]['text'] if len(choices) > 1 else ""
+                current_question.choice_text_3 = choices[2]['text'] if len(choices) > 2 else ""
+                current_question.choice_text_4 = choices[3]['text'] if len(choices) > 3 else ""
+                current_question.correct_choice = correct_choice
+                current_question.save()
 
 @admin.register(PlacementTestAttempt)
 class PlacementTestAttemptAdmin(admin.ModelAdmin):
@@ -174,10 +391,4 @@ class PlacementTestQuestionAdmin(admin.ModelAdmin):
     list_display = ('text', 'test', 'marks', 'order')
     list_filter = ('test',)
     search_fields = ('text', 'test__title')
-    inlines = [PlacementTestChoiceInline]
-
-@admin.register(PlacementTestChoice)
-class PlacementTestChoiceAdmin(admin.ModelAdmin):
-    list_display = ('text', 'question', 'is_correct', 'order')
-    list_filter = ('question__test', 'is_correct')
-    search_fields = ('text', 'question__text')
+    fields = ('test', 'text', 'marks', 'order', 'choice_text_1', 'choice_text_2', 'choice_text_3', 'choice_text_4', 'correct_choice')

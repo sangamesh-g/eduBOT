@@ -426,15 +426,20 @@ def submit_placement_test(request, attempt_id):
             # Record answers
             total_score = 0
             for question in attempt.test.questions.all():
-                choice_id = request.POST.get(f'question_{question.id}')
-                if choice_id:
-                    choice = PlacementTestChoice.objects.get(id=choice_id)
-                    PlacementTestAnswer.objects.create(
+                selected_choice = request.POST.get(f'question_{question.id}')
+                if selected_choice:
+                    # Convert to integer choice number (1-4)
+                    selected_choice_num = int(selected_choice)
+                    
+                    # Create answer
+                    answer = PlacementTestAnswer.objects.create(
                         attempt=attempt,
                         question=question,
-                        choice=choice
+                        choice_number=selected_choice_num
                     )
-                    if choice.is_correct:
+                    
+                    # Check if selected choice is correct
+                    if selected_choice_num == question.correct_choice:
                         total_score += question.marks
             
             # Update attempt
@@ -461,8 +466,31 @@ def placement_test_result(request, attempt_id):
     """View for showing placement test results"""
     attempt = get_object_or_404(PlacementTestAttempt, id=attempt_id, student=request.user)
     
-    # Get all answers with questions and choices
-    answers = attempt.answers.select_related('question', 'choice').all()
+    # Get all answers with questions
+    answers = attempt.answers.select_related('question').all()
+    
+    # Prepare data for the template
+    answer_data = []
+    for answer in answers:
+        question = answer.question
+        choice_number = answer.choice_number
+        
+        # Get the text for the selected choice
+        selected_text = getattr(question, f'choice_text_{choice_number}', '')
+        
+        # Check if the answer is correct
+        is_correct = (choice_number == question.correct_choice)
+        
+        # Get the correct choice text
+        correct_text = getattr(question, f'choice_text_{question.correct_choice}', '')
+        
+        answer_data.append({
+            'question': question,
+            'selected_choice': choice_number,
+            'selected_text': selected_text,
+            'is_correct': is_correct,
+            'correct_text': correct_text
+        })
     
     # Get relevant courses based on the recommended level
     relevant_courses = Course.objects.filter(
@@ -473,7 +501,7 @@ def placement_test_result(request, attempt_id):
     
     context = {
         'attempt': attempt,
-        'answers': answers,
+        'answers': answer_data,
         'relevant_courses': relevant_courses,
         'can_retake': True  # Allow retaking the test
     }
@@ -527,23 +555,18 @@ def upload_placement_test(request):
                     )
                     
                     for row in reader:
+                        # Create question with direct choice fields
                         question = PlacementTestQuestion.objects.create(
                             test=test,
                             text=row['question'],
                             marks=float(row.get('marks', 1.0)),
-                            order=int(row.get('order', 0))
+                            order=int(row.get('order', 0)),
+                            choice_text_1=row.get('choice_1', ''),
+                            choice_text_2=row.get('choice_2', ''),
+                            choice_text_3=row.get('choice_3', ''),
+                            choice_text_4=row.get('choice_4', ''),
+                            correct_choice=int(row.get('correct_choice', 1))
                         )
-                        
-                        # Add choices
-                        for i in range(1, 5):  # Assuming 4 choices
-                            choice_text = row.get(f'choice_{i}')
-                            if choice_text:
-                                PlacementTestChoice.objects.create(
-                                    question=question,
-                                    text=choice_text,
-                                    is_correct=(row.get('correct_choice') == str(i)),
-                                    order=i
-                                )
             
             elif file.name.endswith(('.xls', '.xlsx')):
                 # Handle Excel file
@@ -560,23 +583,18 @@ def upload_placement_test(request):
                     )
                     
                     for _, row in df.iterrows():
+                        # Create question with direct choice fields
                         question = PlacementTestQuestion.objects.create(
                             test=test,
                             text=row['question'],
                             marks=float(row.get('marks', 1.0)),
-                            order=int(row.get('order', 0))
+                            order=int(row.get('order', 0)),
+                            choice_text_1=row.get('choice_1', ''),
+                            choice_text_2=row.get('choice_2', ''),
+                            choice_text_3=row.get('choice_3', ''),
+                            choice_text_4=row.get('choice_4', ''),
+                            correct_choice=int(row.get('correct_choice', 1))
                         )
-                        
-                        # Add choices
-                        for i in range(1, 5):  # Assuming 4 choices
-                            choice_text = row.get(f'choice_{i}')
-                            if choice_text:
-                                PlacementTestChoice.objects.create(
-                                    question=question,
-                                    text=choice_text,
-                                    is_correct=(row.get('correct_choice') == str(i)),
-                                    order=i
-                                )
             
             messages.success(request, 'Placement test uploaded successfully!')
             return redirect('placement_test_list')

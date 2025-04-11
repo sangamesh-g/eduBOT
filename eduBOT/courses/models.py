@@ -386,15 +386,75 @@ class PlacementTestQuestion(models.Model):
     explanation = models.TextField(blank=True, help_text='Explanation for the correct answer')
     order = models.PositiveIntegerField(default=0)
     
+    # New fields to store choices directly
+    choice_text_1 = models.TextField(blank=True, null=True)
+    choice_text_2 = models.TextField(blank=True, null=True)
+    choice_text_3 = models.TextField(blank=True, null=True) 
+    choice_text_4 = models.TextField(blank=True, null=True)
+    correct_choice = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4')], null=True, blank=True)
+    
     class Meta:
         ordering = ['order']
     
     def __str__(self):
-        return f"Question {self.order} for {self.test.title}"
+        return self.text
+        
+    @property
+    def choices(self):
+        """Return choices in a format compatible with existing code"""
+        choices = []
+        
+        # Check if we are using the old or new choice system
+        old_choices = PlacementTestChoice.objects.filter(question=self)
+        if old_choices.exists():
+            return old_choices
+            
+        # Use new choice fields
+        if self.choice_text_1:
+            choices.append({
+                'id': 1,
+                'text': self.choice_text_1,
+                'is_correct': self.correct_choice == 1,
+                'order': 1
+            })
+        if self.choice_text_2:
+            choices.append({
+                'id': 2,
+                'text': self.choice_text_2,
+                'is_correct': self.correct_choice == 2,
+                'order': 2
+            })
+        if self.choice_text_3:
+            choices.append({
+                'id': 3,
+                'text': self.choice_text_3,
+                'is_correct': self.correct_choice == 3,
+                'order': 3
+            })
+        if self.choice_text_4:
+            choices.append({
+                'id': 4,
+                'text': self.choice_text_4,
+                'is_correct': self.correct_choice == 4,
+                'order': 4
+            })
+        
+        # Convert to objects that mimic PlacementTestChoice objects
+        choice_objects = []
+        for choice in choices:
+            obj = type('PlacementTestChoiceProxy', (), {})()
+            obj.id = choice['id']
+            obj.text = choice['text']
+            obj.is_correct = choice['is_correct']
+            obj.order = choice['order']
+            choice_objects.append(obj)
+            
+        return choice_objects
 
+# Keep for data migration purposes but mark as deprecated
 class PlacementTestChoice(models.Model):
-    """Choices for placement test questions"""
-    question = models.ForeignKey(PlacementTestQuestion, on_delete=models.CASCADE, related_name='choices')
+    """Choices for placement test questions (DEPRECATED)"""
+    question = models.ForeignKey(PlacementTestQuestion, on_delete=models.CASCADE, related_name='old_choices')
     text = models.TextField()
     is_correct = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
@@ -403,7 +463,7 @@ class PlacementTestChoice(models.Model):
         ordering = ['order']
     
     def __str__(self):
-        return f"Choice {self.order} for {self.question.text[:50]}"
+        return self.text
 
 class PlacementTestAttempt(models.Model):
     """Student's attempt at a placement test"""
@@ -439,7 +499,7 @@ class PlacementTestAnswer(models.Model):
     """Student's answer to a placement test question"""
     attempt = models.ForeignKey(PlacementTestAttempt, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(PlacementTestQuestion, on_delete=models.CASCADE)
-    choice = models.ForeignKey(PlacementTestChoice, on_delete=models.CASCADE)
+    choice_number = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4')], default=1)
     
     class Meta:
         unique_together = ('attempt', 'question')

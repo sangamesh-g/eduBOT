@@ -1,0 +1,47 @@
+function submitAnswer(questionId, optionId, timeTaken) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const url = "{% url 'submit_answer' attempt.id %}";
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            question_id: questionId,
+            option_id: optionId,
+            time_taken: timeTaken
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI to show if answer is correct
+            if (data.is_correct) {
+                // Add visual feedback for correct answer
+                const selectedOption = document.querySelector(`input[name="question_${questionId}"]:checked`);
+                if (selectedOption) {
+                    selectedOption.parentElement.classList.add('correct-answer');
+                }
+            }
+        } else {
+            console.error('Error submitting answer:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Update the event listener for choice selection
+document.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const questionId = this.name.split('_')[1];
+        const optionId = this.value;
+        const timeTaken = questionTimers[questionId] || 0;
+        
+        submitAnswer(questionId, optionId, timeTaken);
+    });
+}); 

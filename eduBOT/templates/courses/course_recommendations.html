@@ -14,8 +14,8 @@
                     <div class="alert alert-info border-0 d-flex mb-4">
                         <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
                         <div>
-                            <h5 class="alert-heading">Placement Test Results</h5>
-                            <p>Based on your placement test score of <strong>{{ attempt.score }}</strong>, we recommend courses at the <strong>{{ attempt.recommended_level|title }}</strong> level.</p>
+                            <h5 class="alert-heading">Eligibility Test Results</h5>
+                            <p>Based on your Eligibility test score of <strong>{{ attempt.score }}</strong>, we recommend courses at the <strong>{{ attempt.recommended_level|title }}</strong> level.</p>
                             <hr>
                             <p class="mb-0">The course you selected is at the <strong>{{ current_course.level|title }}</strong> level, which may not be the best fit for your current skill level.</p>
                         </div>
@@ -54,7 +54,7 @@
                                 <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
                                 <div>
                                     <h5 class="alert-heading">No Courses Available</h5>
-                                    <p class="mb-0">No courses are currently available at your recommended level. Please check back later or consider retaking the placement test.</p>
+                                    <p class="mb-0">No courses are currently available at your recommended level. Please check back later or consider retaking the Eligibility test.</p>
                                 </div>
                             </div>
                         </div>
@@ -65,7 +65,7 @@
                         <h5 class="mb-3 fw-bold">Options:</h5>
                         <div class="d-flex flex-wrap gap-3">
                             <a href="{% url 'start_placement_test' attempt.test.id %}" class="btn btn-primary btn-lg">
-                                <i class="bi bi-arrow-clockwise me-2"></i>Retake Placement Test
+                                <i class="bi bi-arrow-clockwise me-2"></i>Retake Eligibility Test
                             </a>
                             <a href="{% url 'courses' %}" class="btn btn-outline-secondary btn-lg">
                                 <i class="bi bi-grid me-2"></i>Browse All Courses

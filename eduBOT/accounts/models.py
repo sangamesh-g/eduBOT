@@ -6,6 +6,7 @@ from django.apps import apps
 from .utils import get_profile_picture_path, get_message_file_path, delete_message_file
 import uuid
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 class UserProfile(models.Model):
     """
@@ -154,7 +155,7 @@ class Message(models.Model):
     file = models.FileField(upload_to=get_message_file_path, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     is_forwarded = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     deleted_by = models.ManyToManyField(User, related_name='deleted_messages', blank=True)
     
     def __str__(self):

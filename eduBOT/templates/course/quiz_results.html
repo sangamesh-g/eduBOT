@@ -186,7 +186,7 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white p-4 border-0">
                     <div class="d-flex justify-content-between align-items-start">
-                        <h4 class="mb-0">{{ question_data.question.text }}</h4>
+                        <h4 class="mb-0">{{ question_data.question.text|linebreaksbr }}</h4>
                         <div>
                             <span class="badge bg-info me-2">{{ question_data.question.marks }} marks</span>
                             {% if question_data.is_correct %}
@@ -225,7 +225,7 @@
                                             {{ forloop.counter }}
                                         </span>
                                     {% endif %}
-                                    <span class="choice-text">{{ choice.text }}</span>
+                                    <span class="choice-text">{{ choice.text|linebreaksbr }}</span>
                                 </div>
                                 
                                 {% if choice == question_data.selected_choice %}

@@ -45,17 +45,17 @@
                     <div class="mb-4">
                         <h5>Question Review</h5>
                         {% for answer in answers %}
-                        <div class="card mb-3 {% if answer.choice.is_correct %}border-success{% else %}border-danger{% endif %}">
+                        <div class="card mb-3 {% if answer.is_correct %}border-success{% else %}border-danger{% endif %}">
                             <div class="card-body">
                                 <h6 class="card-title">
                                     <span class="badge bg-secondary me-2">{{ forloop.counter }}</span>
                                     {{ answer.question.text }}
                                 </h6>
-                                <p class="mb-2">Your answer: {{ answer.choice.text }}</p>
-                                {% if not answer.choice.is_correct %}
+                                <p class="mb-2">Your answer: {{ answer.selected_text }}</p>
+                                {% if not answer.is_correct %}
                                 <p class="mb-0 text-success">
                                     <i class="bi bi-check-circle me-1"></i>
-                                    Correct answer: {{ answer.question.choices.filter.is_correct.first.text }}
+                                    Correct answer: {{ answer.correct_text }}
                                 </p>
                                 {% endif %}
                             </div>
