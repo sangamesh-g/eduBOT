@@ -162,61 +162,38 @@ def take_quiz(request, attempt_id):
 
 @login_required
 def submit_answer(request, attempt_id):
-    """AJAX view for submitting an individual answer"""
-    if request.method != 'POST' or not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    """Submit an answer for a quiz question"""
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, student=request.user)
+    data = json.loads(request.body)
     
-    attempt = get_object_or_404(QuizAttempt, id=attempt_id)
+    question_id = data.get('question_id')
+    option_id = data.get('option_id')  # This will be 'A', 'B', 'C', or 'D'
+    time_taken = data.get('time_taken')
     
-    # Security check
-    if attempt.student != request.user or attempt.end_time:
-        return JsonResponse({'success': False, 'error': 'Unauthorized access'})
+    question = get_object_or_404(Question, id=question_id, quiz=attempt.quiz)
     
-    # Get data from request
-    try:
-        data = json.loads(request.body)
-        question_id = data.get('question_id')
-        choice_id = data.get('choice_id')
-        time_taken = data.get('time_taken')
-        
-        question = get_object_or_404(Question, id=question_id)
-        choice = get_object_or_404(Choice, id=choice_id) if choice_id else None
-        
-        # Make sure question belongs to the quiz
-        if question.quiz != attempt.quiz:
-            return JsonResponse({'success': False, 'error': 'Question does not belong to this quiz'})
-        
-        # Update or create the answer
-        answer, created = Answer.objects.update_or_create(
-            attempt=attempt,
-            question=question,
-            defaults={
-                'selected_choice': choice,
-                'time_taken': time_taken
-            }
-        )
-        
-        response_data = {
-            'success': True,
-            'answer_id': answer.id,
+    # Create or update the answer
+    answer, created = Answer.objects.get_or_create(
+        attempt=attempt,
+        question=question,
+        defaults={
+            'selected_option': option_id,
+            'time_taken': time_taken
         }
-        
-        # If show immediate results is enabled, return correctness
-        if attempt.quiz.show_result_immediately:
-            response_data['is_correct'] = answer.is_correct
-            
-            if answer.is_correct:
-                response_data['feedback'] = "Correct!"
-            else:
-                correct_choice = question.choices.filter(is_correct=True).first()
-                response_data['feedback'] = f"Incorrect. The correct answer is: {correct_choice.text}"
-                if question.explanation:
-                    response_data['explanation'] = question.explanation
-        
-        return JsonResponse(response_data)
-        
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+    )
+    
+    if not created:
+        answer.selected_option = option_id
+        answer.time_taken = time_taken
+        answer.save()
+    
+    # Return whether the answer is correct
+    return JsonResponse({
+        'success': True,
+        'is_correct': answer.is_correct,
+        'selected_option': answer.selected_option,
+        'numeric_option': answer.selected_numeric_option
+    })
 
 @login_required
 def submit_quiz(request, attempt_id):
@@ -294,8 +271,8 @@ def quiz_results(request, attempt_id):
     if attempt.student != request.user and not is_teacher:
         return HttpResponseForbidden("You don't have permission to view these results.")
     
-    # Get all answers with questions and selected choices
-    answers = attempt.answers.select_related('question', 'selected_choice').all()
+    # Get all answers with questions
+    answers = attempt.answers.select_related('question').all()
     
     # Organize data for display
     questions_data = []
@@ -303,7 +280,7 @@ def quiz_results(request, attempt_id):
         correct_choice = answer.question.choices.filter(is_correct=True).first()
         questions_data.append({
             'question': answer.question,
-            'selected_choice': answer.selected_choice,
+            'selected_option': answer.selected_option,
             'correct_choice': correct_choice,
             'is_correct': answer.is_correct,
             'time_taken': answer.time_taken,

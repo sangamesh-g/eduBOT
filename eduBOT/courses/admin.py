@@ -30,21 +30,30 @@ class QuizAdminForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'rows': 15, 'cols': 80}),
         required=False,
         help_text=mark_safe(
-            """Add multiple questions at once. Use the following format:<br>
-            Q: Question text here<br>
-            A: Option 1 text [correct]<br>
-            B: Option 2 text<br>
-            C: Option 3 text<br>
-            D: Option 4 text<br>
-            MARKS: 2<br>
-            TIME: 60<br>
-            <br>
-            Q: Next question text<br>
-            A: Option 1 text<br>
-            B: Option 2 text [correct]<br>
-            ... and so on.<br>
-            <br>
-            Mark correct answers with [correct]. MARKS and TIME are optional."""
+            """Add multiple questions at once. Format:<br>
+            <pre>
+Q: Question text here
+   You can include multiple lines
+   And code snippets with proper indentation:
+   int x = 5;
+   System.out.println(x);
+
+A: First option
+B: Second option
+C: Third option [correct]
+D: Fourth option
+MARKS: 2
+TIME: 60
+
+Q: Next question...
+            </pre>
+            Notes:
+            - Questions start with 'Q:'
+            - Options start with 'A:', 'B:', 'C:', 'D:'
+            - Add [correct] after the correct option
+            - MARKS and TIME are optional (defaults: 1 mark, 60 seconds)
+            - Preserve indentation for code snippets
+            """
         )
     )
     
@@ -89,33 +98,32 @@ class QuizAdmin(admin.ModelAdmin):
         bulk_questions = form.cleaned_data.get('bulk_questions')
         if bulk_questions:
             questions = []
-            choices = []
             current_question = None
+            current_question_text = []
             question_order = Question.objects.filter(quiz=obj).count()
             
             lines = bulk_questions.strip().split('\n')
             marks = 1  # Default marks
             time_seconds = 60  # Default time
+            choices = []
             
             for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
+                line = line.rstrip()  # Keep leading whitespace for code formatting
                 
                 if line.startswith('Q:'):
                     # Save previous question if exists
                     if current_question and len(choices) > 0:
+                        current_question.text = '\n'.join(current_question_text)
                         current_question.save()
                         for choice in choices:
                             choice.question = current_question
                             choice.save()
                     
-                    # Create new question
-                    question_text = line[2:].strip()
+                    # Start new question
+                    current_question_text = [line[2:].strip()]  # Initialize with first line
                     question_order += 1
                     current_question = Question(
                         quiz=obj,
-                        text=question_text,
                         marks=marks,
                         time_seconds=time_seconds,
                         order=question_order
@@ -124,8 +132,14 @@ class QuizAdmin(admin.ModelAdmin):
                     marks = 1  # Reset to default
                     time_seconds = 60  # Reset to default
                 
-                elif line.startswith(('A:', 'B:', 'C:', 'D:', 'E:', 'F:')):
+                elif line.startswith(('A:', 'B:', 'C:', 'D:')):
                     if current_question:
+                        # Before processing choice, save accumulated question text
+                        if current_question_text:
+                            current_question.text = '\n'.join(current_question_text)
+                            current_question_text = []
+                        
+                        option_id = line[0]  # Get A, B, C, or D
                         choice_text = line[2:].strip()
                         is_correct = False
                         
@@ -135,27 +149,33 @@ class QuizAdmin(admin.ModelAdmin):
                         
                         choice = Choice(
                             question=current_question,  # This will be updated after question is saved
+                            option_id=option_id,
                             text=choice_text,
                             is_correct=is_correct
                         )
                         choices.append(choice)
                 
                 elif line.startswith('MARKS:'):
-                    marks_str = line[6:].strip()
                     try:
-                        marks = float(marks_str)
+                        marks = float(line[6:].strip())
                     except ValueError:
-                        marks = 1
+                        marks = 1  # Default if invalid
                 
                 elif line.startswith('TIME:'):
-                    time_str = line[5:].strip()
                     try:
-                        time_seconds = int(time_str)
+                        time_seconds = int(line[5:].strip())
                     except ValueError:
-                        time_seconds = 60
+                        time_seconds = 60  # Default if invalid
+                
+                else:
+                    # If we're in a question and the line doesn't start with any special prefix,
+                    # it's part of the question text
+                    if current_question_text:
+                        current_question_text.append(line)
             
             # Save the last question
             if current_question and len(choices) > 0:
+                current_question.text = '\n'.join(current_question_text)
                 current_question.save()
                 for choice in choices:
                     choice.question = current_question
@@ -164,7 +184,7 @@ class QuizAdmin(admin.ModelAdmin):
 class AnswerInline(admin.TabularInline):
     model = Answer
     extra = 0
-    readonly_fields = ('question', 'selected_choice', 'time_taken', 'is_correct')
+    readonly_fields = ('question', 'selected_option', 'time_taken', 'is_correct')
     can_delete = False
     
     def has_add_permission(self, request, obj=None):

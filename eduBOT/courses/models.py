@@ -185,7 +185,7 @@ class Quiz(models.Model):
     )
     prevent_tab_switch = models.BooleanField(default=True, help_text="Prevent tab switching during quiz")
     randomize_questions = models.BooleanField(default=True)
-    randomize_choices = models.BooleanField(default=True)
+    randomize_choices = models.BooleanField(default=False, help_text="Keep this disabled to maintain A,B,C,D order")
     show_result_immediately = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -237,7 +237,7 @@ class Quiz(models.Model):
 class Question(models.Model):
     """Question for a quiz"""
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
-    text = models.TextField()
+    text = models.TextField(help_text="Question text (supports multiple lines)")
     image = models.ImageField(upload_to='quiz_questions/', blank=True, null=True)
     time_seconds = models.PositiveIntegerField(default=60, help_text="Time in seconds to answer")
     marks = models.FloatField(default=1.0)
@@ -252,12 +252,52 @@ class Question(models.Model):
 
 class Choice(models.Model):
     """Answer choice for a question"""
+    OPTION_CHOICES = (
+        ('A', 'A'),
+        ('B', 'B'),
+        ('C', 'C'),
+        ('D', 'D'),
+    )
+    
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
-    text = models.CharField(max_length=255)
+    option_id = models.CharField(max_length=1, choices=OPTION_CHOICES, help_text="Option identifier (A, B, C, D)")
+    text = models.TextField(help_text="Choice text (supports multiple lines)")
     is_correct = models.BooleanField(default=False)
     
+    class Meta:
+        unique_together = ('question', 'option_id')
+        ordering = ['option_id']
+    
+    @property
+    def numeric_id(self):
+        """Return numeric ID (1,2,3,4) based on option_id (A,B,C,D)"""
+        option_to_number = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+        return option_to_number.get(self.option_id, 0)
+    
+    @property
+    def order(self):
+        """Return numeric order based on option_id (A=1, B=2, C=3, D=4)"""
+        return self.numeric_id
+    
+    def clean(self):
+        # Ensure only one correct answer per question
+        if self.is_correct and self.question.choices.exclude(id=self.id).filter(is_correct=True).exists():
+            raise ValidationError("A question can only have one correct answer.")
+        
+        # Ensure option_id is unique for this question
+        if self.question.choices.exclude(id=self.id).filter(option_id=self.option_id).exists():
+            raise ValidationError(f"Option {self.option_id} already exists for this question.")
+        
+        # Validate that option_id is one of A, B, C, D
+        if self.option_id not in dict(self.OPTION_CHOICES):
+            raise ValidationError("Option ID must be one of A, B, C, or D")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return self.text[:50]
+        return f"{self.option_id}. {self.text[:50]}"
 
 class QuizAttempt(models.Model):
     """Record of a student's attempt at a quiz"""
@@ -292,7 +332,7 @@ class QuizAttempt(models.Model):
         """Calculate the score based on submitted answers"""
         score = 0
         for answer in self.answers.all():
-            if answer.selected_choice and answer.selected_choice.is_correct:
+            if answer.is_correct:
                 score += answer.question.marks
         
         self.score = score
@@ -305,7 +345,7 @@ class Answer(models.Model):
     """Student's answer to a question"""
     attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
+    selected_option = models.CharField(max_length=1, choices=Choice.OPTION_CHOICES, null=True, blank=True)
     time_taken = models.PositiveIntegerField(help_text="Time taken in seconds", null=True, blank=True)
     
     class Meta:
@@ -315,10 +355,20 @@ class Answer(models.Model):
         return f"Answer for {self.question}"
     
     @property
+    def selected_numeric_option(self):
+        """Return the numeric option (1,2,3,4) for the selected answer"""
+        option_to_number = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+        return option_to_number.get(self.selected_option, None)
+    
+    @property
     def is_correct(self):
-        if not self.selected_choice:
+        if not self.selected_option:
             return False
-        return self.selected_choice.is_correct
+        try:
+            correct_choice = self.question.choices.get(is_correct=True)
+            return self.selected_option == correct_choice.option_id
+        except Choice.DoesNotExist:
+            return False
 
 class StudentAnalytics(models.Model):
     """Analytics data for student performance"""

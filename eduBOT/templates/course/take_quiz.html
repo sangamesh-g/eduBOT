@@ -125,15 +125,16 @@
                         
                         <div class="card-body p-4">
                             <div class="choices-container" data-answer-id="{{ qa.answer.id }}">
-                                {% for choice in qa.choices %}
-                                    <label class="choice-item d-flex align-items-center" for="choice-{{ qa.question.id }}-{{ choice.id }}">
+                                {% for choice in qa.choices|dictsort:"order" %}
+                                    <label class="choice-item d-flex align-items-center" for="choice-{{ qa.question.id }}-{{ choice.option_id }}">
                                         <input type="radio" 
                                                name="question-{{ qa.question.id }}" 
-                                               id="choice-{{ qa.question.id }}-{{ choice.id }}" 
-                                               value="{{ choice.id }}" 
+                                               id="choice-{{ qa.question.id }}-{{ choice.option_id }}" 
+                                               value="{{ choice.option_id }}" 
                                                class="choice-radio"
-                                               {% if qa.answer.selected_choice.id == choice.id %}checked{% endif %}>
-                                        <span class="choice-marker me-3">{{ forloop.counter|stringformat:"A" }}</span>
+                                               data-numeric-id="{{ choice.numeric_id }}"
+                                               {% if qa.answer.selected_option == choice.option_id %}checked{% endif %}>
+                                        <span class="choice-marker me-3">{{ choice.option_id }} ({{ choice.numeric_id }})</span>
                                         <span class="choice-text">{{ choice.text|linebreaksbr }}</span>
                                     </label>
                                 {% endfor %}
@@ -308,7 +309,10 @@
             });
         });
         
-        function submitAnswer(questionId, choiceId, timeSpent, choicesContainer) {
+        function submitAnswer(questionId, optionId, timeSpent, choicesContainer) {
+            const selectedInput = choicesContainer.querySelector('input[type="radio"]:checked');
+            if (!selectedInput) return;  // No option selected
+
             fetch('{% url "submit_answer" attempt.id %}', {
                 method: 'POST',
                 headers: {
@@ -317,59 +321,25 @@
                 },
                 body: JSON.stringify({
                     question_id: questionId,
-                    choice_id: choiceId,
+                    option_id: selectedInput.value,  // This will be A, B, C, or D
+                    numeric_id: selectedInput.dataset.numericId,  // This will be 1, 2, 3, or 4
                     time_taken: timeSpent
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Track answered questions
-                    answeredQuestions++;
-                    
-                    // Show feedback if immediate results are enabled
-                    if (showImmediateResults && data.hasOwnProperty('is_correct')) {
-                        const feedbackContainer = choicesContainer.closest('.card-body').querySelector('.feedback-container');
-                        feedbackContainer.classList.remove('d-none');
-                        
+                    const selectedChoice = choicesContainer.querySelector('.choice-item.selected');
+                    if (selectedChoice) {
                         if (data.is_correct) {
-                            feedbackContainer.innerHTML = `
-                                <div class="alert alert-success">
-                                    <i class="bi bi-check-circle-fill me-2"></i>
-                                    ${data.feedback}
-                                </div>
-                            `;
-                            
-                            // Mark the selected choice as correct
-                            choicesContainer.querySelector('.choice-item.selected').classList.add('correct');
+                            selectedChoice.classList.add('correct');
                         } else {
-                            let feedbackHtml = `
-                                <div class="alert alert-danger">
-                                    <i class="bi bi-x-circle-fill me-2"></i>
-                                    ${data.feedback}
-                                </div>
-                            `;
-                            
-                            if (data.explanation) {
-                                feedbackHtml += `
-                                    <div class="alert alert-info">
-                                        <i class="bi bi-info-circle-fill me-2"></i>
-                                        <strong>Explanation:</strong> ${data.explanation}
-                                    </div>
-                                `;
-                            }
-                            
-                            feedbackContainer.innerHTML = feedbackHtml;
-                            
-                            // Mark the selected choice as incorrect
-                            choicesContainer.querySelector('.choice-item.selected').classList.add('incorrect');
+                            selectedChoice.classList.add('incorrect');
                         }
                     }
                 }
             })
-            .catch(error => {
-                console.error('Error submitting answer:', error);
-            });
+            .catch(error => console.error('Error:', error));
         }
         
         // Timer functionality
