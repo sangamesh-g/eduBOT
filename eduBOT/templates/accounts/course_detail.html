@@ -72,7 +72,7 @@
                     {% if course.thumbnail %}
                         <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
                     {% else %}
-                        <img src="https://source.unsplash.com/random/800x450/?{{ course.title }}" class="card-img-top" alt="{{ course.title }}">
+                        <img src="{{ course.thumbnail.url }" class="card-img-top" alt="{{ course.title }}">
                     {% endif %}
                     <div class="card-body p-4">
                         {% if is_teacher %}
