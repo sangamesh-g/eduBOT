@@ -36,7 +36,7 @@
     }
     
     .choice-item.selected {
-        background-color: #eeeeff;
+        background-color: #f8f9ff;
         border-color: #6c63ff;
         border-width: 2px;
     }
@@ -139,9 +139,6 @@
                                     </label>
                                 {% endfor %}
                             </div>
-                            
-                            <!-- Feedback will be shown here if immediate feedback is enabled -->
-                            <div class="feedback-container mt-3 d-none"></div>
                         </div>
                         
                         <div class="card-footer bg-white p-4 border-0">
@@ -215,7 +212,6 @@
         const totalQuestions = questionCards.length;
         let currentQuestionIndex = 0;
         let remainingTime = {{ remaining_time }};
-        const showImmediateResults = {% if quiz.show_result_immediately %}true{% else %}false{% endif %};
         const preventTabSwitch = {% if prevent_tab_switch %}true{% else %}false{% endif %};
         let answeredQuestions = 0;
         let timer;
@@ -321,22 +317,15 @@
                 },
                 body: JSON.stringify({
                     question_id: questionId,
-                    option_id: selectedInput.value,  // This will be A, B, C, or D
-                    numeric_id: selectedInput.dataset.numericId,  // This will be 1, 2, 3, or 4
+                    option_id: selectedInput.value,
                     time_taken: timeSpent
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const selectedChoice = choicesContainer.querySelector('.choice-item.selected');
-                    if (selectedChoice) {
-                        if (data.is_correct) {
-                            selectedChoice.classList.add('correct');
-                        } else {
-                            selectedChoice.classList.add('incorrect');
-                        }
-                    }
+                    // Just track that the answer was submitted successfully
+                    answeredQuestions++;
                 }
             })
             .catch(error => console.error('Error:', error));
