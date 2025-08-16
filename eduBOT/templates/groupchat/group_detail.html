@@ -1,0 +1,189 @@
+{% extends 'accounts/base.html' %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">{{ group.name }}</h2>
+      <div class="text-muted">Teacher: {{ group.teacher.username }}</div>
+    </div>
+    {% if request.user.id == group.teacher_id %}
+      <form class="d-flex gap-2 position-relative" action="{% url 'groupchat:add_student_to_group' group.id %}" method="post" autocomplete="off">
+        {% csrf_token %}
+        <input class="form-control" id="student-search" placeholder="Add student by username" name="username" required>
+        <button class="btn btn-outline-primary">Add</button>
+        <div id="student-suggestions" class="position-absolute bg-white border rounded shadow" style="top: 100%; left: 0; right: 120px; z-index: 10; display: none;"></div>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if join_requests %}
+    <div class="alert alert-info">
+      <strong>Pending join requests</strong>
+      <ul class="mb-0">
+        {% for r in join_requests %}
+          <li class="d-flex gap-2 align-items-center">
+            <span>{{ r.student.username }}</span>
+            <a class="btn btn-sm btn-success" href="{% url 'groupchat:handle_join_request' r.id 'approve' %}">Approve</a>
+            <a class="btn btn-sm btn-danger" href="{% url 'groupchat:handle_join_request' r.id 'reject' %}">Reject</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-body" id="message-list" style="height: 420px; overflow-y: auto;">
+      {% for m in messages %}
+        <div class="mb-2">
+          <div class="small text-muted">{{ m.sender.username }} • {{ m.created_at|date:'d-m-Y h:i A' }}</div>
+          <div>{{ m.content|linebreaksbr }}</div>
+          {% if m.attachment %}
+            <div class="mt-1"><a href="{{ m.attachment.url }}" target="_blank">Attachment</a></div>
+          {% endif %}
+        </div>
+      {% endfor %}
+        </div>
+        <div class="card-footer">
+          <form id="send-form" class="d-flex gap-2" action="{% url 'groupchat:send_group_message' group.id %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input class="form-control" name="content" placeholder="Type a message" autocomplete="off">
+            <input class="form-control" type="file" name="attachment" style="max-width:260px">
+            <button class="btn btn-primary">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header bg-white"><strong>Participants</strong></div>
+        <div class="card-body p-0" style="max-height: 480px; overflow-y: auto">
+          <ul class="list-group list-group-flush" id="participants-list">
+            {% for m in memberships %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                  {{ m.user.get_full_name|default:m.user.username }}
+                  {% if m.role == 'teacher' %}<span class="badge bg-primary ms-2">Teacher</span>{% endif %}
+                </span>
+                {% if request.user.id == group.teacher_id and m.user_id != group.teacher_id %}
+                  <form method="post" action="{% url 'groupchat:remove_member' group.id m.user.username %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger">Remove</button>
+                  </form>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% if request.user.id != group.teacher_id %}
+        <div class="card-footer text-end">
+          <form method="post" action="{% url 'groupchat:leave_group' group.id %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-secondary">Leave group</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const list = document.getElementById('message-list');
+  list.scrollTop = list.scrollHeight;
+
+  const form = document.getElementById('send-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = form.action;
+    const formData = new FormData(form);
+    const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await res.json();
+    if (data.success) {
+      const m = data.message;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mb-2';
+      wrapper.innerHTML = `<div class="small text-muted">${m.sender} • ${m.created_at}</div>`+
+                          `<div>${(m.content || '').replaceAll('\n','<br>')}</div>`+
+                          (m.attachment_url ? `<div class=\"mt-1\"><a href=\"${m.attachment_url}\" target=\"_blank\">Attachment</a></div>` : '');
+      list.appendChild(wrapper);
+      list.scrollTop = list.scrollHeight;
+      form.reset();
+    }
+  });
+  
+  // Simple auto-refresh (polling) every 8s could be added later
+  // Polling for new messages
+  let lastId = {{ messages.last.id|default:0 }};
+  async function poll() {
+    try {
+      const res = await fetch('{% url "groupchat:get_new_messages" group.id %}?last_id=' + (lastId || 0), {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      const data = await res.json();
+      if (data.success && data.messages.length) {
+        for (const m of data.messages) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'mb-2';
+          wrapper.innerHTML = `<div class="small text-muted">${m.sender} • ${m.created_at}</div>`+
+                              `<div>${(m.content || '').replaceAll('\n','<br>')}</div>`+
+                              (m.attachment_url ? `<div class=\"mt-1\"><a href=\"${m.attachment_url}\" target=\"_blank\">Attachment</a></div>` : '');
+          list.appendChild(wrapper);
+          lastId = m.id;
+        }
+        list.scrollTop = list.scrollHeight;
+      }
+    } catch (e) { /* ignore */ }
+    setTimeout(poll, 8000);
+  }
+  setTimeout(poll, 8000);
+  
+  // Optionally, periodic refresh of participants list
+  async function refreshParticipants() {
+    try {
+      const res = await fetch('{% url "groupchat:participants" group.id %}', {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      const data = await res.json();
+      const ul = document.getElementById('participants-list');
+      if (ul && data.participants) {
+        ul.innerHTML = data.participants.map(p => `
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>${p.full_name} ${p.role === 'teacher' ? '<span class=\"badge bg-primary ms-2\">Teacher</span>' : ''}</span>
+          </li>
+        `).join('');
+      }
+    } catch (e) { /* ignore */ }
+    setTimeout(refreshParticipants, 20000);
+  }
+  setTimeout(refreshParticipants, 20000);
+
+  // Teacher student auto-complete
+  const searchInput = document.getElementById('student-search');
+  const suggestions = document.getElementById('student-suggestions');
+  if (searchInput) {
+    let timer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = searchInput.value.trim();
+      if (!q) { suggestions.style.display = 'none'; suggestions.innerHTML=''; return; }
+      timer = setTimeout(async () => {
+        const url = '{% url "groupchat:search_students" group.id %}?q=' + encodeURIComponent(q);
+        const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+        const data = await res.json();
+        suggestions.innerHTML = (data.results || []).map(r => `<div class=\"px-2 py-1 suggestion-item\" style=\"cursor:pointer\">${r.full_name} <span class=\"text-muted\">(@${r.username})</span></div>`).join('');
+        suggestions.style.display = data.results && data.results.length ? 'block' : 'none';
+        [...suggestions.querySelectorAll('.suggestion-item')].forEach((el, idx) => {
+          el.addEventListener('click', () => {
+            const item = data.results[idx];
+            searchInput.value = item.username;
+            suggestions.style.display = 'none';
+          });
+        });
+      }, 300);
+    });
+  }
+</script>
+{% endblock %}
+{% endblock %}
+
+

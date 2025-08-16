@@ -41,12 +41,5 @@ urlpatterns = [
     path('courses/<int:course_id>/edit/', views.edit_course, name='edit_course'),
     path('courses/<int:course_id>/review/', views.submit_review, name='submit_review'),
     
-    # Messages
-    path('messages/', views.user_messages, name='messages'),
-    path('messages/new/', views.new_conversation, name='new_conversation'),
-    path('messages/send/<int:conversation_id>/', views.send_message, name='send_message'),
-    path('messages/forward/<int:message_id>/', views.forward_message, name='forward_message'),
-    path('messages/delete/<int:message_id>/', views.delete_message, name='delete_message'),
-    path('messages/check_new/<int:conversation_id>/', views.check_new_messages, name='check_new_messages'),
-    path('messages/typing/<int:conversation_id>/', views.typing_status, name='typing_status'),
+    # Messaging removed in favor of groupchat app
 ]

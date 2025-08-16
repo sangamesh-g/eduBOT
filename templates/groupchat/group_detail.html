@@ -1,0 +1,85 @@
+{% extends 'accounts/base.html' %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">{{ group.name }}</h2>
+      <div class="text-muted">Teacher: {{ group.teacher.username }}</div>
+    </div>
+    {% if request.user.id == group.teacher_id %}
+      <form class="d-flex gap-2" action="{% url 'groupchat:add_student_to_group' group.id %}" method="post">
+        {% csrf_token %}
+        <input class="form-control" placeholder="Add student by username" name="username" required>
+        <button class="btn btn-outline-primary">Add</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if join_requests %}
+    <div class="alert alert-info">
+      <strong>Pending join requests</strong>
+      <ul class="mb-0">
+        {% for r in join_requests %}
+          <li class="d-flex gap-2 align-items-center">
+            <span>{{ r.student.username }}</span>
+            <a class="btn btn-sm btn-success" href="{% url 'groupchat:handle_join_request' r.id 'approve' %}">Approve</a>
+            <a class="btn btn-sm btn-danger" href="{% url 'groupchat:handle_join_request' r.id 'reject' %}">Reject</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body" id="message-list" style="height: 420px; overflow-y: auto;">
+      {% for m in messages %}
+        <div class="mb-2">
+          <div class="small text-muted">{{ m.sender.username }} • {{ m.created_at|date:'Y-m-d H:i' }}</div>
+          <div>{{ m.content|linebreaksbr }}</div>
+          {% if m.attachment %}
+            <div class="mt-1"><a href="{{ m.attachment.url }}" target="_blank">Attachment</a></div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="card-footer">
+      <form id="send-form" class="d-flex gap-2" action="{% url 'groupchat:send_group_message' group.id %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input class="form-control" name="content" placeholder="Type a message" autocomplete="off">
+        <input class="form-control" type="file" name="attachment" style="max-width:260px">
+        <button class="btn btn-primary">Send</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const list = document.getElementById('message-list');
+  list.scrollTop = list.scrollHeight;
+
+  const form = document.getElementById('send-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = form.action;
+    const formData = new FormData(form);
+    const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await res.json();
+    if (data.success) {
+      const m = data.message;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mb-2';
+      wrapper.innerHTML = `<div class="small text-muted">${m.sender} • ${m.created_at}</div>`+
+                          `<div>${(m.content || '').replaceAll('\n','<br>')}</div>`+
+                          (m.attachment_url ? `<div class="mt-1"><a href="${m.attachment_url}" target="_blank">Attachment</a></div>` : '');
+      list.appendChild(wrapper);
+      list.scrollTop = list.scrollHeight;
+      form.reset();
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}
+
+

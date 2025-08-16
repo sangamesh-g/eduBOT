@@ -366,6 +366,13 @@
                             <i class="bi bi-clipboard-check me-2"></i>Eligibilty Tests
                         </a>
                     </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'groupchat' in request.path %}active{% endif %}" href="{% url 'groupchat:groups' %}">
+                            <i class="bi bi-people me-2"></i>Groups
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
                     </li>
@@ -394,7 +401,7 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
                                 <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'messages' %}"><i class="bi bi-chat me-2"></i>Messages</a></li>
+                                <li><a class="dropdown-item" href="{% url 'groupchat:groups' %}"><i class="bi bi-people me-2"></i>Groups</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                             </ul>
@@ -412,19 +419,22 @@
         </div>
     </nav>
 
+    <!-- Notification Toasts -->
+    {% if messages %}
+    <div id="notification-toasts" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+        {% for message in messages %}
+        <div class="toast align-items-center text-bg-{% if 'error' in message.tags %}danger{% elif 'warning' in message.tags %}warning{% elif 'success' in message.tags %}success{% elif 'info' in message.tags %}info{% else %}primary{% endif %} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="18000">
+            <div class="d-flex">
+                <div class="toast-body">{{ message }}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Main Content -->
     <main>
-        {% if messages %}
-            <div class="container mt-4">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         {% block content %}{% endblock %}
     </main>
 
@@ -496,6 +506,13 @@
             // Initialize any tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // Auto-show and auto-hide notification toasts (18s)
+            const toastEls = document.querySelectorAll('#notification-toasts .toast');
+            toastEls.forEach(el => {
+                const t = new bootstrap.Toast(el, { autohide: true, delay: 18000 });
+                t.show();
+            });
         });
     </script>
     

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'accounts.templatetags',
     'accounts',
     'courses',
+    'groupchat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -113,7 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Use Indian Standard Time across the app
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 

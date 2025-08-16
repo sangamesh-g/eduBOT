@@ -37,7 +37,7 @@ class TeacherProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'specialization', 'experience')
     search_fields = ('user__username', 'user__email', 'specialization')
     list_filter = ('experience',)
-
+ 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'education_level', 'interests', 'github_username')
